@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -41,6 +42,7 @@ class ExportGuards(unittest.TestCase):
             with self.assertRaises(ValueError):
                 e.source_in_build(path, self.target, self.folder)
 
+    @unittest.skipIf(os.name == 'nt', 'Windows without Developer Mode cannot create fixture symlinks')
     def test_symlink_dependency_rejected(self):
         link = self.folder / 'Resources/link.mp4'
         link.symlink_to(self.source)
@@ -267,6 +269,20 @@ class ExportGuards(unittest.TestCase):
         self.assertEqual([w['code'] for w in value['warnings']], ['native-dissolve-audio-overlap'])
         self.assertEqual(e.supported_features({'materials': {}, 'tracks': []})['warnings'], [])
 
+    def test_windows_scope_accepts_only_reviewed_basic_timeline(self):
+        basic = {'materials': {}, 'tracks': []}
+        value = e.windows_supported_features(basic, {'font_assets': []})
+        self.assertEqual(value['mask_export'], 'not enabled on Windows')
+        for bucket in ('drafts', 'transitions', 'common_mask', 'video_effects', 'audio_effects'):
+            with self.subTest(bucket=bucket), self.assertRaisesRegex(ValueError, '尚未验收'):
+                e.windows_supported_features({'materials': {bucket: [{}]}, 'tracks': []},
+                                             {'font_assets': []})
+        with self.assertRaisesRegex(ValueError, 'support has been removed'):
+            e.windows_supported_features({'materials': {'effects': [{}]}, 'tracks': []},
+                                         {'font_assets': []})
+        with self.assertRaisesRegex(ValueError, '自定义字体'):
+            e.windows_supported_features(basic, {'font_assets': [{}]})
+
     def test_invalid_settings_rejected(self):
         timeline = {'canvas_config': {'width': 1280, 'height': 721}, 'fps': 25}
         with self.assertRaises(ValueError):
@@ -276,6 +292,7 @@ class ExportGuards(unittest.TestCase):
             with self.assertRaises(ValueError):
                 e.settings_for(timeline, bitrate, timeout)
 
+    @unittest.skipUnless(sys.platform == 'darwin', 'sandbox-exec is macOS-only')
     def test_sandbox_allows_only_owned_user_data_and_no_external_writes(self):
         job = self.root / 'job'; job.mkdir()
         profile = job / 'test.sb'; profile.write_bytes(e.sandbox_profile(job))

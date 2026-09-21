@@ -44,8 +44,10 @@ class RuntimeProfiles(unittest.TestCase):
                 profiles.validate_export_profiles(profiles.PROFILE_PREFIX+a,profiles.PROFILE_PREFIX+b)
 
     def test_resource_pairing_keeps_capture_provenance(self):
-        for p in profiles.EXPORT_PROFILES:
+        for p in profiles.MACOS_EXPORT_PROFILES:
             profiles.validate_resource_profile(p,profiles.RESOURCE_CAPTURE_PROFILE)
+        with self.assertRaises(ValueError):
+            profiles.validate_resource_profile(profiles.WINDOWS_PROFILE, profiles.RESOURCE_CAPTURE_PROFILE)
         with self.assertRaises(ValueError):
             profiles.validate_resource_profile(profiles.PROFILE_PREFIX+'11.4.0',profiles.RESOURCE_CAPTURE_PROFILE)
         with self.assertRaises(ValueError):

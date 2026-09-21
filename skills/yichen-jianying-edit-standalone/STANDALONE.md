@@ -32,14 +32,15 @@ macOS 用 `export JIANYING_HEADLESS_ROOT=...`，路径必须是绝对路径。
 python scripts\headless_draft.py --help
 ```
 
-`scripts/headless_draft.py` 会核对检出目录下 `engine/` 的 16 个组件固定哈希。
+`scripts/headless_draft.py` 会核对检出目录下 `engine/` 的 17 个组件固定哈希。
 任一组件不同都会明确报错并停止，不会静默继续，也不接受相对路径。
 
 ## 支持范围
 
-- **Windows**：剪映专业版 Windows 11.5.0.14471，支持草稿构建、首页登记、结构回读与离线计划。
-- **macOS**：Apple Silicon + 剪映 11.5.0 / 11.4.2，额外支持在副本中编辑已有工程与原生导出。
-- 原生导出在 Windows 上尚未适配，调用会立即失败并说明原因。
+- **Windows**：剪映专业版 Windows 11.5.0.14471，支持草稿构建、首页登记、结构回读、离线计划，
+  以及固定 DLL 指纹下的基础单时间线原生导出。
+- **macOS**：Apple Silicon + 剪映 11.5.0 / 11.4.2，支持在副本中编辑已有工程与原生导出。
+- Windows 原生导出暂不放行蒙版、转场、特效、复合片段和自定义字体。
 
 完整说明见本项目 `docs/WINDOWS.md`；计划格式见 `references/headless-macos.md`。
 

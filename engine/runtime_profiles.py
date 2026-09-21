@@ -7,7 +7,8 @@ PROFILES = {
     '11.4.2': '632c8ddd09ff4a54f876cd8142eb505055ee26d944199506b230949b7e106bd1',
     '11.4.0': 'a1693070036a6678bb5db35f71d2105812ad24a2370e7e91c78712cc0d6455f3',
 }
-EXPORT_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.4.2'))
+MACOS_EXPORT_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.4.2'))
+EXPORT_PROFILES = MACOS_EXPORT_PROFILES | {WINDOWS_PROFILE}
 RESOURCE_CAPTURE_PROFILE = PROFILE_PREFIX + '11.4.2'
 TIMELINE_SCHEMAS = frozenset((('185.0.0', 360000), ('187.0.0', 360000)))
 
@@ -59,5 +60,5 @@ def validate_export_profiles(build_profile, runtime_profile):
 
 
 def validate_resource_profile(runtime_profile, capture_profile):
-    if capture_profile != RESOURCE_CAPTURE_PROFILE or runtime_profile not in EXPORT_PROFILES:
+    if capture_profile != RESOURCE_CAPTURE_PROFILE or runtime_profile not in MACOS_EXPORT_PROFILES:
         raise ValueError('Native resources need a reviewed runtime profile/capture pairing')

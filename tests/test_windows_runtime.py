@@ -152,10 +152,12 @@ class PublishTransaction(unittest.TestCase):
 
 @WINDOWS_ONLY
 class PlatformGates(unittest.TestCase):
-    def test_native_export_fails_closed_without_touching_the_build(self):
+    def test_native_export_platform_gate_accepts_reviewed_windows_adapter(self):
         import native_export
-        with self.assertRaisesRegex(ValueError, '原生导出尚未适配'):
-            native_export.require_supported_platform()
+        import runtime_profiles as profiles
+        self.assertIsNone(native_export.require_supported_platform())
+        self.assertIn(profiles.WINDOWS_PROFILE, profiles.EXPORT_PROFILES)
+        profiles.validate_export_profiles(profiles.WINDOWS_PROFILE, profiles.WINDOWS_PROFILE)
 
     def test_timeline_filename_follows_the_platform(self):
         self.assertEqual(runtime.TIMELINE_FILE, 'draft_content.json')

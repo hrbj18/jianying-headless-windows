@@ -212,6 +212,22 @@ def supported_features(timeline):
     return result
 
 
+def windows_supported_features(timeline, record):
+    """Windows 11.5 固定 ABI 当前只放行已完成真机成片验收的基础范围。"""
+    materials = timeline.get('materials', {})
+    # 保持全平台“已退役效果”错误语义，不让 Windows 范围门禁掩盖更具体的原因。
+    for node in materials.get('effects', []):
+        captured_filter_or_text_effect(node)
+    blocked = ('drafts', 'transitions', 'common_mask', 'video_effects', 'audio_effects')
+    present = [name for name in blocked if materials.get(name)]
+    j.require(not present, 'Windows 原生导出尚未验收这些材料类型: ' + ', '.join(present))
+    j.require(not record.get('font_assets'), 'Windows 原生导出尚未验收自定义字体')
+    result = local_supported_features(timeline)
+    result.update(content_scope='Windows 11.5 fixed-ABI local single-timeline video, basic text and audio',
+                  mask_export='not enabled on Windows', nested_timelines=0)
+    return result
+
+
 def verified_build(path):
     path = Path(path).resolve(strict=True)
     record = j.read_json(path / 'build.json')
@@ -241,7 +257,7 @@ def source_in_build(raw, target, folder):
     return source, relative
 
 
-def stage_timeline(timeline, record, folder, out):
+def stage_timeline(timeline, record, folder, out, runtime=None):
     value = deepcopy(timeline)
     target = Path(record['target']).resolve()
     files, mapping, canonical_mapping = {}, {}, {}
@@ -350,8 +366,20 @@ def stage_timeline(timeline, record, folder, out):
                 if canonical in canonical_mapping:
                     return canonical_mapping[canonical]
                 path = Path(item)
-                j.require(path.is_absolute() and path.is_relative_to(j.nd.APP) and path.is_file(),
-                          'Unstaged/unsupported export resource path: ' + key)
+                if j.nd.IS_WINDOWS:
+                    install = Path((runtime or {}).get('install_dir', ''))
+                    mac_prefix = '/Applications/VideoFusion-macOS.app/Contents/Resources/'
+                    if item.startswith(mac_prefix) and install.is_absolute():
+                        translated = install / 'Resources' / item[len(mac_prefix):]
+                        j.require(translated.is_file() and translated.resolve().is_relative_to(install.resolve()),
+                                  'Windows 内置资源不存在: ' + key)
+                        return str(translated)
+                    j.require(install.is_absolute() and path.is_absolute() and
+                              path.resolve().is_relative_to(install.resolve()) and path.is_file(),
+                              'Unstaged/unsupported export resource path: ' + key)
+                else:
+                    j.require(path.is_absolute() and path.is_relative_to(j.nd.APP) and path.is_file(),
+                              'Unstaged/unsupported export resource path: ' + key)
             if key.endswith('url') and item:
                 raise ValueError('Online dependency is not supported by isolated export')
         return item
@@ -426,18 +454,16 @@ def validate_probe(info, settings, duration_us, audio_expected):
 
 
 def require_supported_platform():
-    """Fail closed where no reviewed native export adapter exists yet."""
-    if j.nd.IS_WINDOWS:
-        raise ValueError(
-            'Windows 原生导出尚未适配：该路径需要与本机剪映渲染库 ABI 匹配的原生适配层，'
-            '不能用 macOS 的 xcrun/sandbox-exec 流程替代。Windows 当前支持草稿构建、首页登记和结构校验；'
-            '需要成片时请在剪映界面内导出。')
+    """仅允许已有精确运行时指纹和原生适配层的平台。"""
+    j.require(sys.platform == 'darwin' or j.nd.IS_WINDOWS,
+              '当前平台没有已审核的剪映原生导出适配层')
 
 
 def run(build, out, bitrate=4_000_000, timeout=600):
     require_supported_platform()
     build, record, timeline = verified_build(build)
-    capabilities = supported_features(timeline)
+    capabilities = (windows_supported_features(timeline, record) if j.nd.IS_WINDOWS
+                    else supported_features(timeline))
     settings = settings_for(timeline, bitrate, timeout)
     job = Path(out)
     j.require(job.is_absolute() and not job.exists() and not job.is_symlink(), 'Export job must be a new absolute directory')
@@ -455,39 +481,59 @@ def run(build, out, bitrate=4_000_000, timeout=600):
                 'renderer': 'Jianying native ExportService', 'container_writer': 'native MP4 writer',
                 'acceptance_boundaries': capabilities}
     try:
-        staged, files = stage_timeline(timeline, record, build / 'draft', job)
+        staged, files = stage_timeline(timeline, record, build / 'draft', job, runtime)
         j.write(job / 'timeline.json', staged)
         timeline_hash = j.nd.digest(job / 'timeline.json')
         j.write(job / 'inputs.json', {'files': files, 'timeline_sha256': timeline_hash})
-        j.write(job / 'export.sb', sandbox_profile(job))
-        helper = job / 'native-export-helper'
-        frameworks = j.nd.APP / 'Contents/Frameworks'
-        command = ['/usr/bin/xcrun', 'clang++', '-std=c++17', '-arch', 'arm64', '-O2',
-                   '-Wno-deprecated-declarations', str(HERE / 'native_export.cpp'),
-                   '-L' + str(frameworks), '-lvideoeditor', '-Wl,-rpath,' + str(frameworks), '-o', str(helper)]
+        output = job / 'render.mp4'
+        has_masks = any(child.get('materials', {}).get('common_mask') for _, child in compound.graph(timeline))
         compiler_tmp = job / 'compiler-tmp'
         compiler_tmp.mkdir(mode=0o700)
-        env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'LC_ALL': 'C',
-               'TMPDIR': str(compiler_tmp) + '/',
-               'CLANG_MODULE_CACHE_PATH': str(compiler_tmp / 'modules')}
-        compile_result = subprocess.run(command, capture_output=True, timeout=120, env=env)
+        if j.nd.IS_WINDOWS:
+            j.require(not has_masks, 'Windows 原生导出暂未审核蒙版/内置效果资源根配置')
+            helper = job / 'native-export-helper.exe'
+            source = HERE / 'native_export_windows.cpp'
+            tools = str(HERE.parent / 'tools')
+            if tools not in sys.path:
+                sys.path.insert(0, tools)
+            from windows_native_toolchain import compile_helper
+            compile_result, toolchain = compile_helper(source, helper, compiler_tmp)
+            env = dict(os.environ)
+            env['JY_VIDEOEDITOR_DIR'] = runtime['install_dir']
+            # 原生 FFmpeg writer 对含非 ASCII 的绝对输出路径会返回 EINVAL(-22)；
+            # 子进程 cwd 已固定为 job，因此只传 ASCII 相对文件名。
+            command = [str(helper), 'timeline.json', 'render.mp4',
+                       str(settings['width']), str(settings['height']), str(settings['fps']),
+                       str(bitrate), str(timeout)]
+            evidence['windows_toolchain'] = toolchain
+            evidence['network_sandbox_enforced'] = False
+        else:
+            j.write(job / 'export.sb', sandbox_profile(job))
+            helper = job / 'native-export-helper'
+            source = HERE / 'native_export.cpp'
+            frameworks = j.nd.APP / 'Contents/Frameworks'
+            compile_command = ['/usr/bin/xcrun', 'clang++', '-std=c++17', '-arch', 'arm64', '-O2',
+                               '-Wno-deprecated-declarations', str(source), '-L' + str(frameworks),
+                               '-lvideoeditor', '-Wl,-rpath,' + str(frameworks), '-o', str(helper)]
+            env = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'LC_ALL': 'C',
+                   'TMPDIR': str(compiler_tmp) + '/',
+                   'CLANG_MODULE_CACHE_PATH': str(compiler_tmp / 'modules')}
+            compile_result = subprocess.run(compile_command, capture_output=True, timeout=120, env=env)
+            command = ['/usr/bin/sandbox-exec', '-f', str(job / 'export.sb'), str(helper),
+                       str(job / 'timeline.json'), str(output), str(settings['width']), str(settings['height']),
+                       str(settings['fps']), str(bitrate), str(timeout), '1' if has_masks else '0']
+            evidence['network_sandbox_enforced'] = True
+            if has_masks:
+                root = j.nd.APP / 'Contents/Resources/lumi_js_resources_video'
+                evidence['built_in_mask_runtime'] = {
+                    'root': str(root), 'from_signed_app_bundle': True, 'account_data_used': False,
+                    'config_sha256': j.nd.digest(root / 'config.json'),
+                    'javascript_sha256': j.nd.digest(root / 'js/video/video.js')}
         j.write(job / 'compiler.stderr.log', compile_result.stderr)
         j.require(compile_result.returncode == 0, 'Native export helper compilation failed')
         os.chmod(helper, 0o700)
         evidence['helper_sha256'] = j.nd.digest(helper)
-        evidence['adapter_source_sha256'] = j.nd.digest(HERE / 'native_export.cpp')
-        output = job / 'render.mp4'
-        has_masks = any(child.get('materials', {}).get('common_mask') for _, child in compound.graph(timeline))
-        command = ['/usr/bin/sandbox-exec', '-f', str(job / 'export.sb'), str(helper),
-                   str(job / 'timeline.json'), str(output), str(settings['width']), str(settings['height']),
-                   str(settings['fps']), str(bitrate), str(timeout),
-                   '1' if has_masks else '0']
-        if has_masks:
-            root = j.nd.APP / 'Contents/Resources/lumi_js_resources_video'
-            evidence['built_in_mask_runtime'] = {
-                'root': str(root), 'from_signed_app_bundle': True, 'account_data_used': False,
-                'config_sha256': j.nd.digest(root / 'config.json'),
-                'javascript_sha256': j.nd.digest(root / 'js/video/video.js')}
+        evidence['adapter_source_sha256'] = j.nd.digest(source)
         with (job / 'native.stdout.log').open('xb') as stdout, (job / 'native.stderr.log').open('xb') as stderr:
             os.chmod(stdout.name, 0o600); os.chmod(stderr.name, 0o600)
             try:
@@ -495,8 +541,12 @@ def run(build, out, bitrate=4_000_000, timeout=600):
             except subprocess.TimeoutExpired as error:
                 raise ValueError('Native export timed out; partial output retained') from error
         evidence['native_returncode'] = result.returncode
-        evidence['native_completion_event'] = 'JY_NATIVE_EXPORT_DONE' in (job / 'native.stdout.log').read_text(encoding='utf-8', errors='replace')
-        evidence['native_restore_completion_event'] = 'JY_NATIVE_RESTORE_DONE' in (job / 'native.stderr.log').read_text(encoding='utf-8', errors='replace')
+        stdout_text = (job / 'native.stdout.log').read_text(encoding='utf-8', errors='replace')
+        stderr_text = (job / 'native.stderr.log').read_text(encoding='utf-8', errors='replace')
+        evidence['native_completion_event'] = ('JY_WINDOWS_NATIVE_EXPORT_DONE' in stdout_text if j.nd.IS_WINDOWS
+                                               else 'JY_NATIVE_EXPORT_DONE' in stdout_text)
+        evidence['native_restore_completion_event'] = ('JY_WINDOWS_NATIVE_RESTORE_DONE' in stdout_text if j.nd.IS_WINDOWS
+                                                       else 'JY_NATIVE_RESTORE_DONE' in stderr_text)
         j.require(result.returncode == 0 and evidence['native_completion_event'] and evidence['native_restore_completion_event'],
                   'Native restoration/export did not complete successfully')
         probe = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_streams', '-show_format',
