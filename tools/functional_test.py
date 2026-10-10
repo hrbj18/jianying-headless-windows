@@ -645,9 +645,13 @@ class TestContext:
         return True
 
     def cleanup(self):
-        """只删除本测试创建的草稿工程，绝不动用户其他工程。"""
+        """只删除本测试创建的草稿工程，绝不动用户其他工程。
+
+        ``draft project duplicate`` 会额外生成 ``<ref>-copy`` 工程，同样要清理。
+        """
         if self.created_by_test and self.ref_name.startswith(DRAFT_PREFIX):
-            shutil.rmtree(DRAFT_ROOT / self.ref_name, ignore_errors=True)
+            for name in (self.ref_name, self.ref_name + "-copy"):
+                shutil.rmtree(DRAFT_ROOT / name, ignore_errors=True)
 
     def refresh_draft_root(self):
         """重新指向本测试的工程目录（create 之后目录才出现）。"""

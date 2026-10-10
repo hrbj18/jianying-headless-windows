@@ -58,20 +58,23 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 
 ## 逐条真实功能测试（`tools/functional_test.py`）
 
-在剪映官方 VMSDK 沙箱里对 195 条命令各真实执行一次，并在一个全新工程上跑完整剪辑链路。
-结果按官方语义归类，失败不等于缺陷：
+在剪映官方 VMSDK 沙箱里对 195 条命令各真实执行一次（**已登录 VIP 账号**），并在一个全新
+工程上跑完整剪辑链路。结果按官方语义归类，失败不等于缺陷：
 
 | 归类 | 条数 | 含义 |
 | --- | --- | --- |
-| ✅ 成功 | 87 | 官方返回 `err_code=0`，命令真实跑通 |
-| 🔐 需要登录 | 31 | `auth credential is missing: not logged in`，账号权益限制 |
+| ✅ 成功 | 102 | 官方返回 `err_code=0`，命令真实跑通 |
 | ➡️ 需真实前置产物 | 31 | 需要工程里先有对应类型片段（`segment_text`/`segment_video`）、真实 task id、模板槽位或线上资源 |
-| ⚠️ 官方参数契约拒绝 | 22 | `RequiredError` / `ValidationError`：参数组合、互斥或取值域要求 |
-| ⚠️ 官方业务拒绝 | 14 | 资源下载、模板包解析等业务前置条件不满足 |
+| ⚠️ 官方参数契约拒绝 | 27 | `RequiredError` / `ValidationError`：参数组合、互斥或取值域要求 |
+| ⚠️ 官方业务拒绝 | 22 | 线上资源下载失败、模板包解析、算法服务报错等业务前置条件不满足 |
+| ⏭️ 有意跳过 | 4 | `auth logout`（会真实登出）/ `auth login` / `relogin` / `qrcode`（需人工授权） |
 | 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` 等 |
 | 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `trace` 明确只在被当作库内嵌时可用 |
 | 📦 本机缺模型 | 1 | `media vad` 报 AED 模型未安装 |
-| ⏱️ 超时 | 2 | `auth login` / `auth relogin` 是交互式登录，等待用户授权 |
+| 🔐 需要登录 | 1 | `material download` 资源池下载仍失败 |
+
+未登录时同一套测试的成功数是 87、需要登录 31；**登录 VIP 账号后成功数升到 102**，
+说明登录真实解锁了约 15 条账号权益命令（其余需登录命令随后暴露了更深的参数/资源要求）。
 
 工作流层（16 步真实剪辑链路）成功 13 步：建工程 → 加主视频/画中画/文字/音频 → 导出结构取真实
 `seg_id` → 变速/裁剪/调色 → 关键帧 → 加字幕 → 加滤镜 → 导出模板包 → 最终结构校验；2 步是官方
@@ -92,6 +95,11 @@ standalone 不支持的 `history undo/redo`，1 步是模板资源路径要求�
 | `lint command` / `lint draft` / `lint trace` | 用进程退出码表达"发现多少问题"（`result.automation_exit_code`），`err_code=0` 仍是成功；`lint command` 需要 lyra-cli 源码仓库 |
 | `draft algo video-tracking` / `draft blueprint patch` | 官方进程以 `unhandled Windows exception 0xE06D7363` 崩溃（官方缺陷，非封装问题） |
 | `draft algo query` / `wait` | 需要真实 video-tracking task id，无法伪造 |
+| `auth logout` | 会真实清除登录态，让同批所有需要登录的命令立即失败；自动化测试必须跳过 |
+| `draft video mask add`、`draft adjust add`、`draft text effect add`、`draft video audio-effect add` | 参数被接受后进入线上资源下载，失败为 `download failed, sub_code: 1006`（需要真实资源 id/权益） |
+| `draft algo subtitle-recognize`、`draft subtitle/lyrics recognize` | 登录后可执行，但算法侧要求 talking-head 素材，测试素材不满足 |
+| `draft template add` | 需要真实的官方模板包，喂普通 mp4 报 `unzip failed` |
+| `media measure-box`（视频贴纸） | 报 `requires --allow-video-decode` |
 | `auth login --require-jianying-app` | 本机剪映签名不被认可（`signature_not_official`），官方提示可用 `LYRA_CLI_ALLOW_DEV_JIANYING_APP=1` |
 | `auth login --require-jianying-app` | 本机剪映签名不被认可（`signature_not_official`），官方提示可用 `LYRA_CLI_ALLOW_DEV_JIANYING_APP=1` |
 | `auth login --link-url --no-wait` | 返回 `login_url`（300 秒有效）与 `device_code` / `user_code` / `session_handoff`，用户授权后补齐即可登录 |
