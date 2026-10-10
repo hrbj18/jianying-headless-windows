@@ -194,6 +194,21 @@ class OutcomeTests(unittest.TestCase):
                          "business_error")
 
 
+class StdoutParsingTests(unittest.TestCase):
+    def test_extracts_json_even_when_sdk_logs_are_mixed_in(self):
+        text = ('EffectSDK-2220 [EffectABConfig.cpp 1754] getABValue : license = ""\n'
+                '## 2026-10-10 [AlgorithmResourceFinder.cpp,361]\n'
+                '{"err_code":0,"err_msg":"success","result":{"id":"x"}}')
+        body = ft.extract_json(text)
+        self.assertEqual(body.get("err_code"), 0)
+        self.assertEqual(body["result"]["id"], "x")
+
+    def test_extract_json_handles_plain_empty_and_garbage(self):
+        self.assertEqual(ft.extract_json('{"err_code":0}')["err_code"], 0)
+        self.assertEqual(ft.extract_json(''), {})
+        self.assertEqual(ft.extract_json('no json here'), {})
+
+
 class ReportTests(unittest.TestCase):
     def test_markdown_lists_every_command_row(self):
         report = {"command_count": 1,

@@ -95,6 +95,28 @@ class OptionSpec:
 
 # --------------------------------------------------------------------------- 真实运行通道
 
+def extract_json(text):
+    """从可能混有 SDK 日志的 stdout 里抽出官方 JSON 信封。"""
+    if not text or not text.strip():
+        return {}
+    stripped = text.strip()
+    try:
+        value = json.loads(stripped)
+        return value if isinstance(value, dict) else {}
+    except json.JSONDecodeError:
+        pass
+    start, end = stripped.find("{"), stripped.rfind("}")
+    while start >= 0 and end > start:
+        try:
+            value = json.loads(stripped[start:end + 1])
+            if isinstance(value, dict):
+                return value
+        except json.JSONDecodeError:
+            pass
+        end = stripped.rfind("}", start, end)
+    return {}
+
+
 def _read_envelope(result_path):
     """读取官方 worker 的结果文件；尚未写完或不可读时返回 None。"""
     try:
@@ -200,13 +222,9 @@ class OfficialCli:
         if result.get("timedOut"):
             return Outcome("timeout", exit_code=result.get("exitCode"),
                            stdout=stdout, stderr=stderr, duration_ms=duration)
-        body = {}
+        # 官方有时把 EffectSDK 日志混进 stdout，JSON 只是其中一段；必须能从中抽取。
+        body = extract_json(stdout)
         text = stdout.strip()
-        if text:
-            try:
-                body = json.loads(text)
-            except json.JSONDecodeError:
-                body = {}
         if not isinstance(body, dict):
             body = {}
         exit_code = result.get("exitCode")
@@ -215,6 +233,8 @@ class OfficialCli:
                 "err_category": str(body.get("err_category") or ""),
                 "message": str(body.get("err_msg") or ""),
                 "duration_ms": duration, "stdout": stdout, "stderr": stderr}
+        if body and body.get("err_code") == 0 and exit_code is None:
+            return Outcome("ok", **base)  # 极少数命令不返回退出码但信封成功
         if exit_code == 0 and not body:
             return Outcome("unparsed", detail=text[:400], **base)
         if err_code == 0:
@@ -348,7 +368,8 @@ TEXT_VALUE_FLAGS = {"--text", "--content", "--prompt", "--name", "--title", "--l
                     "--language", "--lang", "--speaker", "--mode", "--op",
                     "--animated-property", "--keyframe-type", "--curve-type", "--seg-type",
                     "--speed", "--source-timeline", "--template-id",
-                    "--resource-id", "--task-id"}
+                    "--task-id"}
+# --resource-id 必须是真的线上资源 id，占位值会让 TTS 报 TTSInvalidSpeaker，因此不主动传。
 # 主动补充的核心参数：官方常把实际必填写得比 REQUIRED 更宽松，缺了会只回 usage。
 PROACTIVE_FLAGS = MEDIA_INPUT_FLAGS | DIR_FLAGS | FILE_OUTPUT_FLAGS | SEGMENT_FLAGS | {
     "--ref", "--resource", "--type", "--text", "--content", "--prompt", "--language",
@@ -359,10 +380,67 @@ PROACTIVE_FLAGS = MEDIA_INPUT_FLAGS | DIR_FLAGS | FILE_OUTPUT_FLAGS | SEGMENT_FL
 PATH_EXTRA_ARGS = {
     ("draft", "adjust", "add"): {"--brightness": "0.1"},
     ("draft", "deform", "apply"): {"--scale": "1"},
+    # 这些命令"至少要给一个业务字段"，否则报 no registered handler for field(s)（字段名为空）。
+    ("draft", "video", "volume"): {"--linear": "0.5"},
+    ("draft", "audio", "volume"): {"--linear": "0.5"},
+    ("draft", "text", "style"): {"--size": "7"},
+    ("draft", "text", "wrap-width"): {"--width": "0.5"},
+    ("draft", "video", "background"): {"--type": "color"},
+    # 官方要求 #RRGGBBAA 形式。
+    ("draft", "algo", "chroma-color-matting"): {"--color": "#00FF00FF"},
+    ("draft", "video", "adjust"): {"--brightness": "0.1"},
+    ("draft", "video", "face-beauty"): {"--smooth": "0.3", "--whiten": "0.3"},
+    # video-tracking 需要完整的目标框；只给 --mode 会让官方内部断言崩溃（0xE06D7363）。
+    ("draft", "algo", "video-tracking"): {
+        "--tracker-type": "point", "--center-x": "0.5", "--center-y": "0.5",
+        "--width": "0.2", "--height": "0.2"},
 }
 # 个别命令的参数在别的命令里语义不同，必须按命令排除（否则官方直接报组合错误）。
 PATH_SKIP_FLAGS = {
     ("draft", "blueprint", "resource"): {"--title"},
+    # adjust add 只要调节字段；传 --resource 会被当成线上资源 id 去查询而失败。
+    ("draft", "adjust", "add"): {"--resource"},
+    # 这些命令的 --resource 语义不是"效果资源"，官方直接报 no registered handler。
+    ("draft", "video", "adjust"): {"--resource"},
+    ("draft", "video", "face-beauty"): {"--resource"},
+    ("draft", "video", "background"): {"--resource"},
+    ("draft", "video", "extract-music"): {"--resource"},
+    # vad 的时间窗会让 AED 找不到语音快照（no timeline snapshots）；整段检测才有效。
+    ("media", "vad"): {"--start", "--duration"},
+    # 顶层 effect add 走 video_effect 路线；MotionGraph 专属参数会要求 --type motiongraph。
+    ("draft", "effect", "add"): {"--dir", "--video-scope", "--runtime-source-timebase",
+                                 "--runtime-output-timebase", "--execution", "--prompt"},
+}
+# 这些 flag 一传就改变命令行为（清空/替换/等待/复制…），即使 help 给了 choices 也不该主动传。
+BEHAVIOR_SWITCH_HINTS = ("clear", "invert", "replace", "wait", "copy", "write", "delete",
+                         "skip", "disable", "force", "overwrite", "rerun", "re-run")
+
+
+def is_behavior_switch(flag):
+    bare = flag.lstrip("-").lower()
+    return bare.startswith("no-") or any(hint in bare for hint in BEHAVIOR_SWITCH_HINTS)
+# 这些命令的 --resource 要的是**线上资源 id**（vimo://<id>），不是本地文件路径；
+# 传本地路径会被官方当成 resource_id 去线上查询，报 download failed 1006。
+RESOURCE_KIND_BY_PATH = {
+    ("draft", "video", "effect", "add"): "effect",
+    ("draft", "video", "effect", "update"): "effect",
+    ("draft", "video", "filter", "add"): "filter",
+    ("draft", "video", "filter", "update"): "filter",
+    ("draft", "video", "mask", "add"): "effect",
+    ("draft", "video", "mask", "update"): "effect",
+    ("draft", "video", "audio-effect", "add"): "effect",
+    ("draft", "video", "animation", "add"): "animation",
+    ("draft", "text", "effect", "add"): "effect",
+    ("draft", "text", "effect", "update"): "effect",
+    ("draft", "sticker", "add"): "sticker",
+    ("draft", "effect", "add"): "effect",
+    # 这两个只接受 vimo://<id>（报错明确写 matting stroke / mix_mode supports vimo only）。
+    ("draft", "video", "matting-stroke"): "effect",
+    ("draft", "video", "mix-mode"): "effect",
+}
+# 官方把一些"允许类"开关当作命令能跑起来的前提，help 里却不标 REQUIRED。
+PATH_SWITCH_FLAGS = {
+    ("media", "measure-box"): ["--allow-video-decode"],
 }
 
 # 这些命令会破坏测试环境或必须人工交互，自动化执行时必须跳过并留下原因。
@@ -392,7 +470,7 @@ MODE_DEFAULTS = {
     ("draft", "subtitle", "recognize"): "draft",
     ("draft", "lyrics", "recognize"): "draft",
     ("draft", "algo", "sound-separation"): "vocal",
-    ("draft", "algo", "music-beats"): "beats",
+    ("draft", "algo", "music-beats"): "beat",
     ("draft", "algo", "upscale-resolution"): "1",
     ("media", "beats"): "1",
 }
@@ -403,6 +481,7 @@ FLAG_BY_PATH = {
     ("draft", "video", "effect", "add"): {"--type": "video_effect"},
     ("draft", "video", "mask", "add"): {"--resource-type": "rectangle"},
     ("draft", "video", "color", "smart-color"): {"--mode": "0"},
+    ("draft", "effect", "add"): {"--type": "video_effect"},
 }
 # 官方 help 有明确枚举语义的 flag：给真实合法值，避免"用错值"掩盖命令本身行为。
 FLAG_VALUE_DEFAULTS = {
@@ -428,10 +507,12 @@ FLAG_VALUE_DEFAULTS = {
     # 官方 help 列出的合法值是 position-x/position-y/scale/scale-x/opacity…，"position" 不被接受。
     "--animated-property": "opacity",
     "--track": "0",
-    "--target-timeline": "0",
+    # timeline copy/move 要求源与目标时间线不同，必须给出不同的索引。
+    "--target-timeline": "1",
     "--source-timeline": "0",
+    "--target-object-desc": "object",
     "--params": "points=1000000",
-    "--params-json": "{}",
+    "--params-json": '{"opacity":0.5}',
 }
 # 官方很多数值参数在 help 里只标 TEXT，传非数字会被拒（invalid numeric literal）。
 NUMERIC_DEFAULTS = {
@@ -462,6 +543,9 @@ def make_value(spec, ctx, path):
         return ctx.format_for(path, spec.choices)
     if spec.choices:
         return spec.choices[0]
+    if flag == "--resource-id":
+        # material download 之类必须给真实线上资源 id。
+        return ctx.resource_id("sticker") or ctx.resource_id("effect")
     if flag == "--target":
         # 官方 selector 语法：seg_id=<真实 id>（见 draft edit 的 SELECTORS 段）。
         return f"seg_id={ctx.seg_id}" if ctx.seg_id else None
@@ -477,17 +561,28 @@ def make_value(spec, ctx, path):
     if flag in FLAG_VALUE_DEFAULTS:
         return FLAG_VALUE_DEFAULTS[flag]
     if flag == "--ref":
+        if tuple(path) == ("draft", "template", "render"):
+            # 官方要求 --ref 指向尚不存在的工作区，否则直接拒绝。
+            return ctx.fresh_ref()
         return ctx.ref
     if flag == "--dir" and tuple(path) == ("draft", "project", "create"):
         return str(ctx.draft_dir)  # create 的 --dir 是新建工程的父目录
     if flag == "--workspace":
         return str(ctx.fresh_workspace(clear=(tuple(path) == ("draft", "blueprint", "init"))))
-    if flag in MEDIA_INPUT_FLAGS:
+    if flag == "--config" and tuple(path) == ("draft", "template", "render"):
+        return str(ctx.template_config())
+    if flag == "--resource":
+        # 优先给真实线上资源（vimo://<id>）；只有确实需要本地文件时才用 local:///。
+        kind = RESOURCE_KIND_BY_PATH.get(tuple(path))
+        online = ctx.resource_id(kind) if kind else None
+        if online:
+            return online
         target = ctx.pick_media(path, flag)
-        if flag == "--resource":
-            # 官方 draft 命令的 --resource 只接受 local:///<绝对路径> 或 template://<id>。
-            return "local:///" + str(target).replace("\\", "/").lstrip("/")
-        return str(target)
+        return "local:///" + str(target).replace("\\", "/").lstrip("/")
+    if flag in MEDIA_INPUT_FLAGS:
+        return str(ctx.pick_media(path, flag))
+        target = ctx.pick_media(path, flag)
+        return "local:///" + str(target).replace("\\", "/").lstrip("/")
     if flag in DIR_FLAGS:
         return str(ctx.out_dir)
     if flag in FILE_OUTPUT_FLAGS:
@@ -504,10 +599,10 @@ def make_value(spec, ctx, path):
             return "1"
         if "<START,END>" in token or "<duration-list>" in token:
             return "0,1"
-        # --end 必须严格大于 --start，否则官方报 invalid time range。
-        if flag == "--end":
+        # 时间范围必须有效：开始 0s、结束 1s，否则官方报 invalid time range。
+        if flag in {"--end", "--end-time"}:
             return "1s"
-        if flag == "--start":
+        if flag in {"--start", "--start-time"}:
             return "0s"
         return "1s"
     if flag == "--to":
@@ -517,8 +612,8 @@ def make_value(spec, ctx, path):
         return "1s"
     if flag == "--points":
         if "keyframe" in path:
-            # 官方要求显式时间单位：0s:0.2,1s:0.8
-            return "0s:0.2,1s:0.8"
+            # 官方示例：--animated-property opacity --points 0s:0%,1s:100%
+            return "0s:0%,1s:100%"
         return "1s"
     if flag == "--params-json":
         return "{}"
@@ -563,9 +658,12 @@ class TestContext:
         self.seg_id = None
         self.seg_ids = []
         self.ids_by_type = {}
+        self.seg_track = {}
+        self.pip_seg_id = None
         self.seed_steps = []
         self.create_outcome = None
         self.format_cache = {}
+        self.resources = {}
         self.generic = {}
         self.notes = []
         self.draft_root = None
@@ -579,8 +677,11 @@ class TestContext:
         self.build_draft()
 
     def build_draft(self):
-        """建工程 → 灌入真实片段 → 取真实 id → 存基线。"""
+        """建工程 → 抓线上资源 → 灌入真实片段 → 取真实 id → 存基线。"""
         self._create_draft()
+        # 线上资源要先就绪，seed 才能加贴纸/特效段。
+        if not self.resources:
+            self._seed_resources()
         self._seed_content()
         self.snapshot()
 
@@ -591,6 +692,9 @@ class TestContext:
         video = media_uri(self.media_files["video"])
         audio = media_uri(self.media_files["audio"])
         seeds = [
+            # 画布必须非零，否则 lyrics animation 等直接报错：
+            # "requires a non-zero draft canvas; run lyra-cli draft config --ratio ..."。
+            ("canvas", ["draft", "config", "--ref", self.ref, "--ratio", "16:9"]),
             # --track 官方要求整数轨道号，写 "video" 会被 ValidationError 拒绝并让工程没有视频段。
             ("video", ["draft", "video", "add", "--ref", self.ref, "--resource", video,
                        "--track", "0", "--start", "0s"]),
@@ -598,7 +702,17 @@ class TestContext:
                       "--start", "0s", "--duration", "3s"]),
             ("audio", ["draft", "audio", "add", "--ref", self.ref, "--kind", "music",
                        "--resource", audio, "--start", "0s"]),
+            # 第二段视频放在轨道 1（画中画）：ai-transition 要求相邻视频段，
+            # 而 mix_mode 只对 track_index > 0 的 PIP 段生效。
+            ("video2", ["draft", "video", "add", "--ref", self.ref, "--resource", video,
+                        "--track", "1", "--start", "0s", "--duration", "2s"]),
         ]
+        online = self.resource_id("sticker")
+        if online:
+            # sticker 域命令（remove/translate）要求目标是真正的 sticker 段。
+            seeds.append(("sticker", ["draft", "sticker", "add", "--ref", self.ref,
+                                      "--resource", online, "--start", "0s",
+                                      "--duration", "1s"]))
         for kind, args in seeds:
             outcome = self.cli(args, cwd=str(self.root),
                                read_write=self.read_write_paths(),
@@ -619,6 +733,19 @@ class TestContext:
         self.seg_ids = [value for kind in SEGMENT_TYPES
                         for value in self.ids_by_type.get(kind, [])]
         self.seg_id = self.seg_ids[0] if self.seg_ids else None
+        # 记录每个段所属轨道，mix_mode 之类只对 PIP（track_index > 0）段生效。
+        self.seg_track = {}
+        tracks = {node.get("id"): (node.get("attributes") or {}).get("track_index")
+                  for node in (structure or [])
+                  if isinstance(node, dict) and node.get("type") == "track"}
+        for node in (structure or []):
+            if not isinstance(node, dict) or node.get("type") not in SEGMENT_TYPES:
+                continue
+            index = tracks.get(node.get("parent_id"))
+            if index is not None:
+                self.seg_track[node.get("id")] = index
+        self.pip_seg_id = next((seg for seg, index in self.seg_track.items()
+                                if isinstance(index, int) and index > 0), None)
         self.seed_steps.append({"kind": "extract-summary", "state": summary.state,
                                 "ids": {k: v[:3] for k, v in self.ids_by_type.items()},
                                 "all_ids": self.seg_ids[:5]})
@@ -717,6 +844,9 @@ class TestContext:
 
     def seg_id_for(self, path):
         """按命令所属域返回对应类型的真实片段 id。"""
+        if path and path[-1] == "mix-mode" and self.pip_seg_id:
+            # mix_mode 只作用于画中画段。
+            return self.pip_seg_id
         if (len(path) > 1 and path[0] == "draft" and path[1] == "algo"
                 and path[-1] in self.ALGO_TEXT_COMMANDS and self.ids_by_type.get("text")):
             return self.ids_by_type["text"][0]
@@ -731,9 +861,46 @@ class TestContext:
                 return self.ids_by_type[kind][0]
         return None
 
+    def resource_id(self, kind):
+        """返回真实的线上资源 URI（vimo://<id>），没有可用资源时返回 None。"""
+        ids = self.resources.get(kind) or []
+        return ("vimo://" + ids[0]) if ids else None
+
+    def _seed_resources(self):
+        """用官方 material search 抓取真实线上资源 id（各类型一个即可）。"""
+        for kind in ("sticker", "effect", "filter", "animation"):
+            outcome = self.cli(["material", "search", "--type", kind, "--prompt", "花",
+                                "--limit", "1"],
+                               cwd=str(self.root), read_write=[str(self.root)])
+            if not outcome.ok:
+                self.seed_steps.append({"kind": "search:" + kind, "state": outcome.state,
+                                        "message": outcome.message[:160]})
+                continue
+            structure = parse_json_result(outcome)
+            items = (structure or {}).get("items") if isinstance(structure, dict) else None
+            ids = [item.get("resource_id") or item.get("effect_id")
+                   for item in (items or []) if isinstance(item, dict)]
+            ids = [value for value in ids if value]
+            if ids:
+                self.resources[kind] = ids
+            self.seed_steps.append({"kind": "search:" + kind, "state": outcome.state,
+                                    "ids": ids[:2]})
+
+    def fresh_ref(self):
+        """一个尚未存在的工作区 ref（template render 只接受这种）。"""
+        return "local://" + self.ref_name + "-render"
+
     def copy_ref(self):
         """project duplicate 的目标工程名（必须是合法 local:// ref）。"""
         return "local://" + self.ref_name + "-copy"
+
+    def template_config(self):
+        """template render 的 --config 必须是 JSON 文件（传 mp4 会解析失败）。"""
+        path = self.out_dir / "template-config.json"
+        if not path.is_file():
+            path.write_text(json.dumps({}, ensure_ascii=False, indent=2),
+                            encoding="utf-8", newline="\n")
+        return path
 
     def fresh_workspace(self, clear=False):
         """给 blueprint 命令用的工作区目录；init 需要空目录。"""
@@ -813,8 +980,12 @@ def build_invocation(path, specs, ctx):
     if "--enable" in flags and "--disable" in flags:
         args.append("--enable")
         used.append("--enable")
+    for switch in PATH_SWITCH_FLAGS.get(tuple(path), []):
+        if switch in flags:
+            args.append(switch)
+            used.append(switch)
     for flag, value in PATH_EXTRA_ARGS.get(tuple(path), {}).items():
-        if flag in flags:
+        if flag in flags and flag not in used:
             args += [flag, value]
             used.append(flag)
     has_seg_id = "--seg-id" in flags and bool(ctx.seg_id)
@@ -824,7 +995,12 @@ def build_invocation(path, specs, ctx):
         skip.add("--end")
     if tuple(path) == ("lint", "draft") and "--ref" in flags:
         skip.add("--input")
+    # keyframe 系列要求"恰好一个"属性来源，两个都传同样会被拒绝。
+    if "--animated-property" in flags and "--keyframe-type" in flags:
+        skip.add("--keyframe-type")
     for spec in specs:
+        if spec.flag in used:
+            continue  # PATH_EXTRA_ARGS 已经给过值，重复传会被 ArgumentMismatch 拒绝
         if has_seg_id and spec.flag in LOCATOR_FLAGS:
             continue  # 与 --seg-id 互斥，官方会直接拒绝
         if spec.flag in skip:
@@ -835,7 +1011,10 @@ def build_invocation(path, specs, ctx):
             continue  # 开关一律不加：避免 --wait / --replace 这类长等待或破坏行为
         if spec.flag in SEGMENT_FLAGS and tuple(path) in OPTIONAL_SEGMENT_PATHS:
             continue
-        # 有 choices 的参数说明官方限定了取值域，按候选传第一个是安全的。
+        # 有 choices 的参数说明官方限定了取值域，按候选传第一个是安全的；
+        # 但"行为开关"例外（--clear-talking-head 之类一传就改变语义）。
+        if spec.choices and is_behavior_switch(spec.flag):
+            continue
         if spec.required or spec.choices or spec.flag in PROACTIVE_FLAGS:
             value = make_value(spec, ctx, path)
             if value is None:

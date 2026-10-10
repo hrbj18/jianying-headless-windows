@@ -87,6 +87,27 @@ python tools/functional_test.py --layer workflow    # 全新工程上跑完整�
 - **会破坏会话或必须人工交互的命令默认跳过**并记录原因：`auth logout`（会真实登出，
   让同批其他需要登录的命令全部失败）、`auth login` / `auth relogin` / `auth qrcode`
   （必须由用户在浏览器授权）。需要登录态时先跑 `tools/lyra_login.py`。
+- **线上资源用 `vimo://<id>`**：`draft video effect/filter/mask add`、`draft sticker add`、
+  `draft text effect add` 等命令的 `--resource` 要的是线上资源 id（可用 `material search`
+  取得），传本地路径会被官方当成 resource_id 去线上查询并报 `download failed 1006`；
+  而 `draft video add` / `media compress` 这类要的是本地文件。
+- **官方日志会污染 stdout**：个别命令把 EffectSDK 日志写在 JSON 前面，解析结果时必须
+  从输出里抽取 JSON 信封，否则会把成功的命令误判成无法解析。
+
+## 官方不支持项的替代实现
+
+- `draft history undo` / `draft history redo` / `draft blueprint cancel` 在 standalone
+  版被官方明确拒绝（"only available when lyra-cli is embedded as a client library"）。
+  需要撤销/重做时用本项目的快照方案：
+
+  ```powershell
+  python tools/draft_history.py --ref <草稿名> --snapshot   # 记录还原点
+  python tools/draft_history.py --ref <草稿名> --undo       # 回退
+  python tools/draft_history.py --ref <草稿名> --redo       # 前进
+  python tools/draft_history.py --ref <草稿名> --list       # 查看还原点
+  ```
+
+  快照存放在 `%LOCALAPPDATA%\Temp\jianying-draft-history\<草稿名>`，不写进草稿目录。
 
 ## 前置条件
 

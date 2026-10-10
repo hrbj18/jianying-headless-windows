@@ -63,18 +63,51 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 
 | 归类 | 条数 | 含义 |
 | --- | --- | --- |
-| ✅ 成功 | 102 | 官方返回 `err_code=0`，命令真实跑通 |
-| ➡️ 需真实前置产物 | 31 | 需要工程里先有对应类型片段（`segment_text`/`segment_video`）、真实 task id、模板槽位或线上资源 |
-| ⚠️ 官方参数契约拒绝 | 27 | `RequiredError` / `ValidationError`：参数组合、互斥或取值域要求 |
-| ⚠️ 官方业务拒绝 | 22 | 线上资源下载失败、模板包解析、算法服务报错等业务前置条件不满足 |
+| ✅ 成功 | 126 | 官方返回 `err_code=0`，命令真实跑通 |
+| ➡️ 需真实前置产物 | 23 | 需要真实 task id、模板包/槽位、或官方不产生的段类型（`segment_filter` 等） |
+| ⚠️ 官方参数契约拒绝 | 20 | 算法类型不受支持、字段名/取值域等官方约束 |
+| ⚠️ 官方业务拒绝 | 14 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
 | ⏭️ 有意跳过 | 4 | `auth logout`（会真实登出）/ `auth login` / `relogin` / `qrcode`（需人工授权） |
-| 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` 等 |
-| 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `trace` 明确只在被当作库内嵌时可用 |
-| 📦 本机缺模型 | 1 | `media vad` 报 AED 模型未安装 |
-| 🔐 需要登录 | 1 | `material download` 资源池下载仍失败 |
+| 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` / `project version upgrade` |
+| 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `blueprint cancel` |
 
-未登录时同一套测试的成功数是 87、需要登录 31；**登录 VIP 账号后成功数升到 102**，
-说明登录真实解锁了约 15 条账号权益命令（其余需登录命令随后暴露了更深的参数/资源要求）。
+演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题后 **126**。
+
+## 本轮逐项解决的问题
+
+| 原问题 | 解决方式 | 结果 |
+| --- | --- | --- |
+| `download failed, sub_code 1006`（effect/filter/mask/add、adjust、text effect、audio-effect、sticker） | `--resource` 改用 `vimo://<真实线上资源 id>`（由 `material search` 取得） | ✅ 全部成功 |
+| `adjust add` 报 `no valid adjust fields` | 不传 `--resource`，只给 `--brightness` 等字段 | ✅ |
+| `--resource` 语义是线上 id 的命令传了本地路径 | 按命令区分本地 `local:///` 与线上 `vimo://` | ✅ |
+| `measure-box` 报 `requires --allow-video-decode` | 补 `--allow-video-decode` 与 `--canvas-width/height` | ✅ |
+| `keyframe add/update/remove/curve set` 报 `requires exactly one of` | 不再同时传 `--keyframe-type` 与 `--animated-property`；`--points` 用 `0s:0%,1s:100%` | ✅ |
+| `lyrics animation` 报 `requires a non-zero draft canvas` | seed 阶段先跑 `draft config --ratio 16:9` | ✅ |
+| `timeline segment copy/move` 要求源与目标时间线不同 | `--source-timeline 0` / `--target-timeline 1` | ✅ |
+| `template render` 要求 fresh ref | `--ref` 指向尚不存在的新工作区，`--config` 用真实 JSON 文件 | ✅ |
+| `matting-stroke` / `mix-mode` 要求 `vimo://<id>` | 资源改走 `vimo://` | ✅ |
+| `video volume` / `text style` / `audio volume` 报空字段名 | 至少补一个业务字段（`--linear` / `--size`） | ✅ |
+| `video adjust` / `face-beauty` / `background` / `extract-music` 误传 `--resource` | 按命令排除该参数 | ✅ |
+| `music-beats` mode 值 | `beats` → `beat` | ✅ |
+| `chroma-color-matting` 需要颜色 | `--color #00FF00FF`（`#RRGGBBAA`） | ✅ |
+| `object-matting-track` 参数名 | 改用 `--target-object-desc` | ✅ |
+| `media vad` 报 AED 模型缺失 | 从本机剪映 11.6 版本目录复制 `aed40_10m.model` 到 11.5 运行时目录 | ✅ |
+| SDK 日志混入 stdout 导致结果无法解析 | `extract_json()` 从日志中抽取官方 JSON 信封 | ✅ |
+| `history undo/redo`、`blueprint cancel` 仅内嵌库可用 | 新增 `tools/draft_history.py`：基于工程文件快照的等价撤销/重做 | ✅ 替代实现 |
+
+## 仍无法通过官方命令解决（附证据）
+
+| 项目 | 官方证据 |
+| --- | --- |
+| `material recommend` / `material similar` / `upgrade` / `project version upgrade` | `command is not implemented yet (work in progress)` |
+| `draft algo video-tracking`、`draft blueprint patch`、`draft template publish` | `internal error: process terminated by unhandled Windows exception 0xE06D7363`（官方进程崩溃，偶发） |
+| `draft algo material-understand`、`media understand` | 服务端 `stage=invalid_client_source`（客户端来源不被接受） |
+| `draft effect generate` | MotionGraph 上游 `Lumi HTTP request failed, status=404` |
+| `draft filter/effect remove·update` | 要求目标是 `segment_filter` / `segment_video_effect` 类型段，官方工程结构里滤镜/特效是片段属性而非独立段 |
+| `draft template add` | 需要真实官方模板包（喂普通 mp4 报 `unzip failed`） |
+| `draft algo query` / `wait` | 需要真实 video-tracking task id，而该命令本身崩溃 |
+| `material download` / `material topic` | 资源池下载/类型不受支持 |
+| `lint command` | 需要 lyra-cli 源码仓库（本机只有运行时） |
 
 工作流层（16 步真实剪辑链路）成功 13 步：建工程 → 加主视频/画中画/文字/音频 → 导出结构取真实
 `seg_id` → 变速/裁剪/调色 → 关键帧 → 加字幕 → 加滤镜 → 导出模板包 → 最终结构校验；2 步是官方
