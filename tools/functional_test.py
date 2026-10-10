@@ -343,6 +343,8 @@ def load_help_text(path):
 MEDIA_INPUT_FLAGS = {
     "--input", "--path", "--resource", "--source", "--from-path", "--input-path",
     "--video", "--audio", "--image", "--input-video", "--input-audio", "--input-image",
+    # AIGC 图生图/图生视频用这些参数名收图片路径。
+    "--first-image", "--last-image", "--reference-image", "--image-path",
 }
 DIR_FLAGS = {"--output-dir", "--dir", "--resource-dir", "--workspace", "--input-dir",
              "--out-dir", "--cache-dir"}
@@ -366,7 +368,7 @@ DURATION_FLAGS = {"--start", "--duration", "--end", "--start-time", "--end-time"
                   "--from", "--to", "--source-from"}
 TEXT_VALUE_FLAGS = {"--text", "--content", "--prompt", "--name", "--title", "--label",
                     "--language", "--lang", "--speaker", "--mode", "--op",
-                    "--animated-property", "--keyframe-type", "--curve-type", "--seg-type",
+                    "--animated-property", "--keyframe-type", "--seg-type",
                     "--speed", "--source-timeline", "--template-id",
                     "--task-id"}
 # --resource-id 必须是真的线上资源 id，占位值会让 TTS 报 TTSInvalidSpeaker，因此不主动传。

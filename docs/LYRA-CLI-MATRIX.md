@@ -63,15 +63,15 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 
 | 归类 | 条数 | 含义 |
 | --- | --- | --- |
-| ✅ 成功 | 126 | 官方返回 `err_code=0`，命令真实跑通 |
+| ✅ 成功 | 127 | 官方返回 `err_code=0`，命令真实跑通 |
 | ➡️ 需真实前置产物 | 23 | 需要真实 task id、模板包/槽位、或官方不产生的段类型（`segment_filter` 等） |
-| ⚠️ 官方参数契约拒绝 | 20 | 算法类型不受支持、字段名/取值域等官方约束 |
+| ⚠️ 官方参数契约拒绝 | 19 | 算法类型不受支持、字段名/取值域等官方约束 |
 | ⚠️ 官方业务拒绝 | 14 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
 | ⏭️ 有意跳过 | 4 | `auth logout`（会真实登出）/ `auth login` / `relogin` / `qrcode`（需人工授权） |
 | 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` / `project version upgrade` |
 | 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `blueprint cancel` |
 
-演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题后 **126**。
+演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题后 **127**。
 
 ## 本轮逐项解决的问题
 
