@@ -365,6 +365,13 @@ PATH_SKIP_FLAGS = {
     ("draft", "blueprint", "resource"): {"--title"},
 }
 
+# 这些命令会破坏测试环境或必须人工交互，自动化执行时必须跳过并留下原因。
+SKIP_COMMANDS = {
+    ("auth", "logout"): "会真实登出账号，破坏同批其他需要登录的命令",
+    ("auth", "login"): "交互式登录，必须由用户在浏览器完成授权",
+    ("auth", "relogin"): "交互式重新登录，必须由用户授权",
+    ("auth", "qrcode"): "交互式扫码登录，必须由用户操作",
+}
 # 这些命令的 --seg-id 是可选的"作用域"参数，主动传入反而改变语义（如 extract 只导某段）。
 OPTIONAL_SEGMENT_PATHS = {("draft", "extract", "summary"), ("draft", "extract", "structure"),
                           ("draft", "extract", "segments")}
@@ -379,11 +386,23 @@ TYPE_DEFAULTS = {
     ("material", "topic"): "sticker",
     ("media", "measure-box"): "sticker",
 }
-# --mode 在官方 help 里常是自由 TEXT，但取值域被命令限定。
+# --mode 在官方 help 里常是自由 TEXT，但取值域被命令限定（登录后才暴露这些校验）。
 MODE_DEFAULTS = {
     ("draft", "algo", "subtitle-recognize"): "draft",
-    ("draft", "algo", "ai-matting"): "auto",
-    ("draft", "algo", "quality-enhance"): "auto",
+    ("draft", "subtitle", "recognize"): "draft",
+    ("draft", "lyrics", "recognize"): "draft",
+    ("draft", "algo", "sound-separation"): "vocal",
+    ("draft", "algo", "music-beats"): "beats",
+    ("draft", "algo", "upscale-resolution"): "1",
+    ("media", "beats"): "1",
+}
+# 个别 flag 在不同命令里取值域完全不同，按命令精确给定。
+FLAG_BY_PATH = {
+    ("draft", "algo", "quality-enhance"): {"--level": "1"},
+    ("draft", "audio", "fade"): {"--type": "both"},
+    ("draft", "video", "effect", "add"): {"--type": "video_effect"},
+    ("draft", "video", "mask", "add"): {"--resource-type": "rectangle"},
+    ("draft", "video", "color", "smart-color"): {"--mode": "0"},
 }
 # 官方 help 有明确枚举语义的 flag：给真实合法值，避免"用错值"掩盖命令本身行为。
 FLAG_VALUE_DEFAULTS = {
@@ -434,16 +453,13 @@ NUMERIC_HINTS = ("rotation", "scale", "alpha", "volume", "width", "height", "bri
 def make_value(spec, ctx, path):
     """为一条参数生成真实可用取值；返回 None 表示不该主动传这个参数。"""
     flag = spec.flag
+    if flag in FLAG_BY_PATH.get(tuple(path), {}):
+        return FLAG_BY_PATH[tuple(path)][flag]
     # --format 必须与 --output 后缀一致，不能直接取 choices[0]（jpg）。
     if flag == "--format":
         if tuple(path) == ("draft", "blueprint", "resource"):
             return None  # --format 只有配合 --sync 才合法
-        hint = " ".join(path)
-        if "image" in hint or "sticker" in hint or "cover" in hint:
-            return "png"
-        if "audio" in hint or "music" in hint or "asr" in hint:
-            return "m4a"
-        return "mp4"
+        return ctx.format_for(path, spec.choices)
     if spec.choices:
         return spec.choices[0]
     if flag == "--target":
@@ -549,6 +565,7 @@ class TestContext:
         self.ids_by_type = {}
         self.seed_steps = []
         self.create_outcome = None
+        self.format_cache = {}
         self.generic = {}
         self.notes = []
         self.draft_root = None
@@ -691,8 +708,14 @@ class TestContext:
             return self.media_files.get("image") or self.media_files["video"]
         return self.media_files.get("video") or self.media_files["audio"]
 
+    # 这些 algo 命令操作的是文本段（TTS/文本加音色/字幕关键词），给视频段会被拒绝。
+    ALGO_TEXT_COMMANDS = {"tts", "text-add-tone", "subtitle-keywords", "subtitle-recognize"}
+
     def seg_id_for(self, path):
         """按命令所属域返回对应类型的真实片段 id。"""
+        if (len(path) > 1 and path[0] == "draft" and path[1] == "algo"
+                and path[-1] in self.ALGO_TEXT_COMMANDS and self.ids_by_type.get("text")):
+            return self.ids_by_type["text"][0]
         domain = path[1] if len(path) > 1 else ""
         wanted = SEGMENT_TYPE_BY_DOMAIN.get(domain)
         if wanted and self.ids_by_type.get(wanted):
@@ -724,15 +747,31 @@ class TestContext:
             return self.media_files.get("audio") or self.media_files["video"]
         return self.media_files.get("video") or self.media_files["audio"]
 
+    def format_for(self, path, choices=None):
+        """统一的输出格式决策：--output 后缀与 --format 必须一致。
+
+        官方会拒绝"format 与 output 后缀冲突"，因此两者共用同一份缓存决策。
+        """
+        key = tuple(path)
+        if key not in self.format_cache:
+            hint = " ".join(path)
+            if any(word in hint for word in ("image", "sticker", "cover", "frame")):
+                value = "png"
+            elif any(word in hint for word in ("audio", "music", "asr")):
+                value = "m4a"
+            else:
+                value = "mp4"
+            self.format_cache[key] = value
+        value = self.format_cache[key]
+        if choices and value not in choices:
+            value = choices[0]
+            self.format_cache[key] = value
+        return value
+
     def output_path(self, flag, path):
         # 官方按输出后缀判定目标格式：音频命令必须 .aac/.m4a/.mp3，图片命令必须 .jpg/.png。
-        hint = " ".join(path) + " " + flag
-        if "image" in hint or "sticker" in hint or "cover" in hint:
-            suffix = ".png"
-        elif "audio" in hint or "asr" in hint or "music" in hint:
-            suffix = ".m4a"
-        else:
-            suffix = ".mp4"
+        suffix = {"png": ".png", "jpg": ".jpg", "jpeg": ".jpeg", "m4a": ".m4a",
+                  "mp3": ".mp3", "aac": ".aac"}.get(self.format_for(path), ".mp4")
         return self.out_dir / ("-".join(path) + suffix)
 
     def generic_value(self, flag):
@@ -792,7 +831,8 @@ def build_invocation(path, specs, ctx):
             continue  # 开关一律不加：避免 --wait / --replace 这类长等待或破坏行为
         if spec.flag in SEGMENT_FLAGS and tuple(path) in OPTIONAL_SEGMENT_PATHS:
             continue
-        if spec.required or spec.flag in PROACTIVE_FLAGS:
+        # 有 choices 的参数说明官方限定了取值域，按候选传第一个是安全的。
+        if spec.required or spec.choices or spec.flag in PROACTIVE_FLAGS:
             value = make_value(spec, ctx, path)
             if value is None:
                 continue
@@ -877,6 +917,12 @@ def execute_layer(paths, ctx, restore_before_write=True):
     """逐条真实执行命令；写入类命令执行前把工程复位到基线，保证各条独立可比。"""
     rows = []
     for path in paths:
+        if tuple(path) in SKIP_COMMANDS:
+            rows.append({"path": path, "args": [], "state": "skipped", "exit_code": None,
+                         "used_flags": [],
+                         "message": SKIP_COMMANDS[tuple(path)], "stdout": "",
+                         "duration_ms": 0})
+            continue
         help_text = load_help_text(path)
         specs = parse_option_specs(help_text) if help_text else []
         args, used = build_invocation(path, specs, ctx)
@@ -1045,6 +1091,7 @@ STATE_LABELS = {
     "model_missing": "📦 本机缺模型",
     "timeout": "⏱️ 超时",
     "worker_timeout": "⏱️ worker 超时",
+    "skipped": "⏭️ 有意跳过（破坏会话/需人工交互）",
 }
 
 

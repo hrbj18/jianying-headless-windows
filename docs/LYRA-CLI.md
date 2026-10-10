@@ -84,6 +84,9 @@ python tools/functional_test.py --layer workflow    # 全新工程上跑完整�
 - 报告同时写入 `work/functional-test/evidence/functional-*.json` 与同名 `.md`。
 - `lint` 系列用进程退出码表达"发现多少问题"（`result.automation_exit_code`），
   官方 `err_code=0` 即命令成功，测试不会把它误判为调用失败。
+- **会破坏会话或必须人工交互的命令默认跳过**并记录原因：`auth logout`（会真实登出，
+  让同批其他需要登录的命令全部失败）、`auth login` / `auth relogin` / `auth qrcode`
+  （必须由用户在浏览器授权）。需要登录态时先跑 `tools/lyra_login.py`。
 
 ## 前置条件
 
@@ -99,6 +102,15 @@ python tools/functional_test.py --layer workflow    # 全新工程上跑完整�
 4. **登录**：需要账号权益的命令（歌词识别、素材下载、AI 算法）要求登录态。
 
 ### 登录（分步流程）
+
+命令行一键登录（推荐，脚本会打印授权链接并轮询到成功）：
+
+```powershell
+python tools/lyra_login.py --status   # 查看登录态
+python tools/lyra_login.py            # 发起授权并等待完成（默认等 5 分钟）
+```
+
+库内分步用法：
 
 ```python
 import lyra_cli

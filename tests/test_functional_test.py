@@ -47,6 +47,22 @@ class FakeContext:
     def fresh_workspace(self, clear=False):
         return self.workspace
 
+    def copy_ref(self):
+        return "local://unit-copy"
+
+    def format_for(self, path, choices=None):
+        # 与真实实现同一套规则：先按命令语义挑格式，再回退到官方候选值。
+        hint = " ".join(path)
+        if any(word in hint for word in ("image", "sticker", "cover", "frame")):
+            value = "png"
+        elif any(word in hint for word in ("audio", "music", "asr")):
+            value = "m4a"
+        else:
+            value = "mp4"
+        if choices and value not in choices:
+            value = choices[0]
+        return value
+
     def pick_media(self, path, flag):
         hint = " ".join(path) + " " + flag
         if "image" in hint:
@@ -97,8 +113,8 @@ class BuildInvocationTests(unittest.TestCase):
         self.assertIn(str(self.ctx.media_files["video"]), args)
         self.assertNotIn("--help", args)
         self.assertNotIn("--no-auto-orient", args)
-        # 可选参数不主动传：避免 --codec 之类改变官方默认行为。
-        self.assertNotIn("--codec", args)
+        # 有 choices 的可选参数按候选传第一个（官方限定了取值域）。
+        self.assertEqual(args[args.index("--codec") + 1], "h264")
 
     def test_format_follows_output_suffix_not_first_choice(self):
         # 官方会拒绝 --format 与 --output 后缀不一致，因此必须跟随后缀（png）而不是 choices[0]。
