@@ -27,6 +27,32 @@ config blueprint
 
 完整清单与实测状态见 `docs/LYRA-CLI-MATRIX.md`。
 
+## 清单驱动的 typed 封装
+
+`engine/lyra_commands.json` 由 `tools/enumerate_all_commands.py` 逐条调用官方
+`<path> --help` 生成，`engine/lyra_commands.py` 再把每条命令装成同名 typed 函数：
+
+```python
+import lyra_cli
+
+lyra_cli.video_speed(draft_root, ref, seg_id="v1", speed=2.0)
+lyra_cli.algo_tts(draft_root, ref, text="你好", speaker="BV700_streaming")
+```
+
+三条约束（由 `tests/test_lyra_command_index.py` 守护）：
+
+- **参数白名单来自实测参数表**：kwarg 名拼错会立刻报错，而不是被静默转发；取不到参数表的
+  命令（`--help` 超时或为空）按官方原样透传，避免把官方新参数挡在门外。
+- **全局开关不进白名单**：`--help` / `--version` / `--jq` 会改变命令行为（`--help` 会让
+  命令挂住），既不能经 kwargs 传入，也不能走 `options`；`options` 与 kwargs 同样逐个校验
+  flag，重复指定 `--ref` 会直接报错。
+- **索引只登记真正安装的名字**：手写封装优先，被顶掉的名字记入
+  `COMMAND_MANUAL_OVERRIDES`；`COMMAND_INDEX` 里每个名字都能用清单签名
+  `(cwd, timeout, ref, options, workspace)` 调用。
+
+参数名支持尾部下划线写法（`from_` → `--from`、`in_` → `--in`），因为 Python 里
+`from` / `in` 不能直接作参数名。
+
 ## 前置条件
 
 1. **剪映主进程在运行**：`lyra-cli` 会校验父进程，非可信宿主直接返回
@@ -35,8 +61,9 @@ config blueprint
    `draftediting_runtime` 的 `doctor` 会检查并补齐。
 3. **`LYRA_CLI_ALLOW_DEV_JIANYING_APP=1`**：本机剪映的 Authenticode 签名不被官方
    认可（`signature_not_official`）。官方在 `auth login --require-jianying-app` 的
-   错误恢复提示里明确给出了这个**开发用开关**，`lyra_cli.run()` 默认通过
-   `os.environ.setdefault` 打开它，用于复用本机已有的剪映登录态。
+   错误恢复提示里明确给出了这个**开发用开关**，`lyra_cli.run()` 默认把它作为
+   `extra_env` 注入官方子进程（不再隐式改写宿主进程的 `os.environ`），用于复用本机
+   已有的剪映登录态。
 4. **登录**：需要账号权益的命令（歌词识别、素材下载、AI 算法）要求登录态。
 
 ### 登录（分步流程）

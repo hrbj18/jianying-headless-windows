@@ -1,7 +1,8 @@
 # lyra-cli 能力矩阵与实测状态
 
-本表由 `work/enumerate_cli.py` 与 `work/export_command_options.py` 实际调用官方
-`--help` 枚举得出，不是文档推测。状态列含义：
+本表由 `tools/enumerate_all_commands.py`（批量枚举全部命令，产出
+`engine/lyra_commands.json`）与 `tools/export_command_options.py`（导出指定命令的
+参数说明）实际调用官方 `--help` 枚举得出，不是文档推测。状态列含义：
 
 - **✅ 实测**：本项目已真实执行过该命令并确认行为；
 - **🔌 已封装**：`engine/lyra_cli.py` 有 typed 函数或走通用转发 `draft()`；

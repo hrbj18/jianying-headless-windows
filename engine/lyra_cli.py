@@ -436,10 +436,12 @@ def lint_command(cwd, input_path=None, suite=None, output=None, fail_on=None, ti
 
 
 # ------------------------------------------------- 全部命令的 typed 封装（清单驱动）
-# engine/lyra_commands.json 由 work/enumerate_all_commands.py 逐条调用官方
+# engine/lyra_commands.json 由 tools/enumerate_all_commands.py 逐条调用官方
 # ``<path> --help`` 生成；install() 会把清单里的每条命令装成同名函数，例如
 # video_speed / video_crop / algo_tts / media_asr / material_search。
-# 上面手写的核心封装优先，清单版本不会覆盖它们（见 COMMAND_SKIPPED）。
+# 上面手写的核心封装优先，清单版本不会覆盖它们：被顶掉的名字记入
+# COMMAND_MANUAL_OVERRIDES，COMMAND_INDEX 只登记真正安装的清单版函数。
+# tests/test_lyra_command_index.py 断言这层对应关系不漂移。
 
 
 def _manifest_runner(path, cwd, timeout=600, ref=None, options=None, workspace=None):

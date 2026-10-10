@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """由官方 `--help` 清单驱动的命令封装。
 
-``engine/lyra_commands.json`` 由 ``work/enumerate_all_commands.py`` 逐条调用官方
+``engine/lyra_commands.json`` 由 ``tools/enumerate_all_commands.py`` 逐条调用官方
 ``<path> --help`` 生成（不靠文档推测），本模块把它变成可调用的 typed 函数：
 
     import lyra_commands
