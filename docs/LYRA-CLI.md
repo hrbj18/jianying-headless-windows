@@ -29,8 +29,12 @@ config blueprint
 
 ## 清单驱动的 typed 封装
 
-`engine/lyra_commands.json` 由 `tools/enumerate_all_commands.py` 逐条调用官方
-`<path> --help` 生成，`engine/lyra_commands.py` 再把每条命令装成同名 typed 函数：
+`engine/lyra_commands.json` 由 `tools/enumerate_all_commands.py` 通过剪映官方 VMSDK
+真实调用每层 `<path> --help`、递归发现叶命令后生成。官方 `draft --help` 不公开
+`video/text/subtitle` 等对象快捷域，因此工具保留一份文档化的**域级最低种子**，并把上一版
+清单路径作为回归种子逐条实测；每个域下面有哪些新动作仍以实时官方 help 为准，不再硬编码
+152 条动作树。`engine/lyra_commands.py`
+再把清单里的每条命令装成同名 typed 函数：
 
 ```python
 import lyra_cli
@@ -39,16 +43,22 @@ lyra_cli.video_speed(draft_root, ref, seg_id="v1", speed=2.0)
 lyra_cli.algo_tts(draft_root, ref, text="你好", speaker="BV700_streaming")
 ```
 
-三条约束（由 `tests/test_lyra_command_index.py` 守护）：
+四条约束（由 `tests/test_lyra_commands.py`、`tests/test_lyra_command_index.py` 与
+`tests/test_lyra_command_enumerator.py` 守护）：
 
-- **参数白名单来自实测参数表**：kwarg 名拼错会立刻报错，而不是被静默转发；取不到参数表的
-  命令（`--help` 超时或为空）按官方原样透传，避免把官方新参数挡在门外。
-- **全局开关不进白名单**：`--help` / `--version` / `--jq` 会改变命令行为（`--help` 会让
-  命令挂住），既不能经 kwargs 传入，也不能走 `options`；`options` 与 kwargs 同样逐个校验
-  flag，重复指定 `--ref` 会直接报错。
+- **参数白名单来自实测参数表**：只要 `help_state == "ok"` 就严格校验，即使过滤全局开关后
+  业务白名单为空也代表“该命令不接受业务参数”；只有 help 超时或为空时才允许未知业务参数
+  原样透传，避免把官方新参数挡在门外。
+- **全局开关始终禁止**：`--help` / `--version` / `--jq` 会改变命令行为（`--help` 会让
+  命令挂住），无论 help 是否解析成功，都不能经 kwargs 或 `options` 传入；`options` 与
+  kwargs 同样逐个校验 flag，重复指定 `--ref` 会直接报错。
 - **索引只登记真正安装的名字**：手写封装优先，被顶掉的名字记入
   `COMMAND_MANUAL_OVERRIDES`；`COMMAND_INDEX` 里每个名字都能用清单签名
   `(cwd, timeout, ref, options, workspace)` 调用。
+- **枚举失败不破坏权威清单**：探测结果先原子写入 `work/lyra-capabilities.json`；只有本次
+  没有任何 help 失败、旧命令未消失、已成功参数表未退化、已知域齐全且成功率达标时，才
+  原子替换 `engine/lyra_commands.json`。可用 `--evidence-only` 明确只取证；只有人工复核后
+  才应使用 `--force` 接受退化结果。
 
 参数名支持尾部下划线写法（`from_` → `--from`、`in_` → `--in`），因为 Python 里
 `from` / `in` 不能直接作参数名。

@@ -70,11 +70,49 @@ class CallerTests(unittest.TestCase):
         call("/draft-root", seg_id="v1", speed=None, wait=False)
         self.assertEqual(self.calls[-1]["options"], {"--seg-id": "v1"})
 
-    def test_timeout_command_passes_anything_through(self):
-        # 参数表未取到的命令（help 超时）不做白名单校验，按官方原样透传
+    def test_timeout_command_passes_unknown_business_flags_through(self):
+        # 参数表未取到的命令（help 超时）不校验未知业务参数，按官方原样透传
         call = self.caller(SAMPLE["commands"][2])
         call("/tmp", anything="x")
         self.assertEqual(self.calls[-1]["options"], {"--anything": "x"})
+        self.assertFalse(call.strict_options)
+
+    def test_global_flags_are_always_rejected_even_when_help_timed_out(self):
+        call = self.caller(SAMPLE["commands"][2])
+        attempts = [
+            lambda: call("/tmp", help=True),
+            lambda: call("/tmp", options={"--version": True}),
+            lambda: call("/tmp", options={"jq": ".result"}),
+        ]
+        for attempt in attempts:
+            with self.subTest(attempt=attempt), self.assertRaises(ValueError):
+                attempt()
+
+    def test_parsed_command_with_no_business_options_rejects_every_flag(self):
+        spec = {"path": ["draft", "project", "list"], "summary": "列出工程",
+                "options": ["--help", "--version", "--jq"], "help_state": "ok"}
+        call = self.caller(spec)
+        self.assertEqual(call.allowed_options, [])
+        self.assertTrue(call.strict_options)
+        self.assertIn("无业务参数", call.__doc__)
+        self.assertNotIn("原样透传", call.__doc__)
+        attempts = [
+            lambda: call("/tmp", rotaton=90),
+            lambda: call("/tmp", ref="local://unexpected"),
+            lambda: call("/tmp", help=True),
+            lambda: call("/tmp", options={"--help": True}),
+        ]
+        for attempt in attempts:
+            with self.subTest(attempt=attempt), self.assertRaises(ValueError):
+                attempt()
+        self.assertEqual(self.calls, [], "校验失败时不得进入 runner")
+
+    def test_options_dictionary_uses_the_same_whitelist(self):
+        call = self.caller(SAMPLE["commands"][0])
+        call("/tmp", options={"seg_id": "v1", "--speed": 2})
+        self.assertEqual(self.calls[-1]["options"], {"--seg-id": "v1", "--speed": 2})
+        with self.assertRaises(ValueError):
+            call("/tmp", options={"--rotation": 90})
 
     def test_metadata_and_docstring(self):
         call = self.caller(SAMPLE["commands"][0])
@@ -106,6 +144,18 @@ class InstallTests(unittest.TestCase):
         self.assertGreater(data["count"], 100, "清单应覆盖 100+ 条官方命令")
         names = [lyra_commands.function_name(spec["path"]) for spec in data["commands"]]
         self.assertEqual(len(names), len(set(names)), "函数名不应重复")
+        top_domains = {spec["path"][0] for spec in data["commands"]}
+        self.assertTrue({"auth", "draft", "material", "media", "lint"} <= top_domains)
+        specs = {tuple(spec["path"]): spec for spec in data["commands"]}
+        failures = (data.get("discovery") or {}).get("failures", [])
+        for failure in failures:
+            with self.subTest(path=failure.get("path")):
+                path = tuple(failure.get("path") or ())
+                if failure.get("state") == "unsupported":
+                    self.assertNotIn(path, specs, "官方明确不支持的旧路径不得继续暴露")
+                else:
+                    self.assertIn(path, specs, "非确定性失败路径必须保留并明确标记非 ok")
+                    self.assertNotEqual(specs[path].get("help_state"), "ok")
 
 
 if __name__ == "__main__":

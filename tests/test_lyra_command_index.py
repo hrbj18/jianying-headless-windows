@@ -78,19 +78,21 @@ class IndexConsistencyTests(unittest.TestCase):
             spec = SPEC_BY_NAME[name]
             expected = [flag for flag in spec["options"] if flag not in GLOBAL_FLAGS]
             with self.subTest(name=name):
-                allowed = getattr(lyra_cli, name).allowed_options
+                function = getattr(lyra_cli, name)
+                allowed = function.allowed_options
                 self.assertEqual(allowed, expected)
+                self.assertEqual(function.strict_options, spec.get("help_state", "ok") == "ok")
                 self.assertEqual(set(allowed) & GLOBAL_FLAGS, set(),
                                  "全局开关不得进入命令白名单")
 
-    def test_unparsed_commands_stay_passthrough(self):
-        # 取不到参数表（help 超时/为空）的命令不做白名单校验，按官方原样透传
-        passthrough = {name for name in lyra_cli.COMMAND_INDEX
-                       if SPEC_BY_NAME[name].get("help_state") != "ok"}
-        self.assertTrue(passthrough, "本清单应包含 help 未取到参数表的命令")
-        for name in sorted(passthrough):
+    def test_shipped_manifest_has_no_unparsed_commands(self):
+        # 最终动态清单已稳定为全量 ok；超时透传语义由 test_lyra_commands 的合成用例覆盖。
+        unparsed = {name for name, spec in SPEC_BY_NAME.items()
+                    if spec.get("help_state") != "ok"}
+        self.assertEqual(unparsed, set())
+        for name in lyra_cli.COMMAND_INDEX:
             with self.subTest(name=name):
-                self.assertEqual(getattr(lyra_cli, name).allowed_options, [])
+                self.assertTrue(getattr(lyra_cli, name).strict_options)
 
     def test_index_functions_accept_the_manifest_signature(self):
         for name in lyra_cli.COMMAND_INDEX:

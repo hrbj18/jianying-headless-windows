@@ -49,11 +49,15 @@ def _flag(name):
     return "--" + cleaned.replace("_", "-")
 
 
-def _check(flag, allowed, dotted):
-    if allowed and flag in _GLOBAL_FLAGS:
+def _check(flag, allowed, dotted, strict):
+    # 全局开关会改变执行语义，任何命令、任何 help 探测状态下都不允许透传。
+    if flag in _GLOBAL_FLAGS:
         raise ValueError(f"{dotted} 不接受全局开关 {flag}")
-    if allowed and flag not in allowed:
-        raise ValueError(f"{dotted} 不支持 {flag}；可用参数: {', '.join(allowed)}")
+    # ``allowed == []`` 有两种含义：成功解析且确实没有业务参数，或 help 探测失败。
+    # 不能再用列表真值区分；只有明确的非 ok help_state 才允许未知业务参数透传。
+    if strict and flag not in allowed:
+        available = ", ".join(allowed) if allowed else "（无业务参数）"
+        raise ValueError(f"{dotted} 不支持 {flag}；可用参数: {available}")
 
 
 def build_caller(spec, runner):
@@ -64,6 +68,9 @@ def build_caller(spec, runner):
     """
     path = list(spec["path"])
     allowed = [flag for flag in (spec.get("options") or []) if flag not in _GLOBAL_FLAGS]
+    # 旧版/手写测试规格没有 help_state 时按已成功解析处理（fail closed）；只有清单明确记录
+    # timeout/empty 等失败状态时才允许未知业务参数透传。
+    strict = spec.get("help_state", "ok") == "ok"
     dotted = " ".join(path)
     summary = spec.get("summary") or ""
 
@@ -73,25 +80,31 @@ def build_caller(spec, runner):
             if value is None or value is False:
                 continue
             flag = _flag(key)
-            _check(flag, allowed, dotted)
+            _check(flag, allowed, dotted, strict)
             pairs[flag] = value
         for key, value in (options or {}).items():
             if value is None or value is False:
                 continue
             flag = key if str(key).startswith("--") else _flag(str(key))
-            _check(flag, allowed, dotted)
+            _check(flag, allowed, dotted, strict)
             if flag in pairs:
                 raise ValueError(f"{dotted} 的 {flag} 被重复指定")
             pairs[flag] = value
-        if ref and "--ref" in pairs:
-            raise ValueError(f"{dotted} 的 --ref 被重复指定（ref= 与 options 冲突）")
+        if ref:
+            # ``ref=`` 最终同样会变成 ``--ref``，不能因为它是显式形参就绕过白名单。
+            _check("--ref", allowed, dotted, strict)
+            if "--ref" in pairs:
+                raise ValueError(f"{dotted} 的 --ref 被重复指定（ref= 与 options 冲突）")
         return runner(path, cwd, timeout=timeout, ref=ref, options=pairs, workspace=workspace)
 
+    option_doc = (", ".join(allowed) if allowed else
+                  ("（无业务参数）" if strict else "（未取到参数表，按官方原样透传）"))
     call.__name__ = function_name(path)
     call.__doc__ = (f"官方命令 ``lyra-cli {dotted}``。\n\n{summary}\n\n"
-                    f"可用参数: {', '.join(allowed) if allowed else '（未取到参数表，按官方原样透传）'}")
+                    f"可用参数: {option_doc}")
     call.command_path = path
     call.allowed_options = allowed
+    call.strict_options = strict
     return call
 
 
