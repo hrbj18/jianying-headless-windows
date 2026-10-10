@@ -392,10 +392,11 @@ PATH_EXTRA_ARGS = {
     ("draft", "algo", "chroma-color-matting"): {"--color": "#00FF00FF"},
     ("draft", "video", "adjust"): {"--brightness": "0.1"},
     ("draft", "video", "face-beauty"): {"--smooth": "0.3", "--whiten": "0.3"},
-    # video-tracking 需要完整的目标框；只给 --mode 会让官方内部断言崩溃（0xE06D7363）。
+    # video-tracking 需要完整目标框；官方 tracker-type 只接受 1/motion 或 2/surface，
+    # 且必须 --wait false —— 默认等待路径会让官方进程崩溃（0xE06D7363）。
     ("draft", "algo", "video-tracking"): {
-        "--tracker-type": "point", "--center-x": "0.5", "--center-y": "0.5",
-        "--width": "0.2", "--height": "0.2"},
+        "--tracker-type": "1", "--center-x": "0.5", "--center-y": "0.5",
+        "--width": "0.2", "--height": "0.2", "--wait": "false"},
 }
 # 个别命令的参数在别的命令里语义不同，必须按命令排除（否则官方直接报组合错误）。
 PATH_SKIP_FLAGS = {
@@ -409,6 +410,8 @@ PATH_SKIP_FLAGS = {
     ("draft", "video", "extract-music"): {"--resource"},
     # vad 的时间窗会让 AED 找不到语音快照（no timeline snapshots）；整段检测才有效。
     ("media", "vad"): {"--start", "--duration"},
+    # video-tracking 的 --mode 会干扰 tracker-type 路径；用官方默认 motion 追踪。
+    ("draft", "algo", "video-tracking"): {"--mode"},
     # 顶层 effect add 走 video_effect 路线；MotionGraph 专属参数会要求 --type motiongraph。
     ("draft", "effect", "add"): {"--dir", "--video-scope", "--runtime-source-timebase",
                                  "--runtime-output-timebase", "--execution", "--prompt"},

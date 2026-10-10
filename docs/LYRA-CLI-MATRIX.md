@@ -63,15 +63,15 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 
 | 归类 | 条数 | 含义 |
 | --- | --- | --- |
-| ✅ 成功 | 127 | 官方返回 `err_code=0`，命令真实跑通 |
+| ✅ 成功 | 128 | 官方返回 `err_code=0`，命令真实跑通 |
 | ➡️ 需真实前置产物 | 23 | 需要真实 task id、模板包/槽位、或官方不产生的段类型（`segment_filter` 等） |
 | ⚠️ 官方参数契约拒绝 | 19 | 算法类型不受支持、字段名/取值域等官方约束 |
-| ⚠️ 官方业务拒绝 | 14 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
+| ⚠️ 官方业务拒绝 | 13 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
 | ⏭️ 有意跳过 | 4 | `auth logout`（会真实登出）/ `auth login` / `relogin` / `qrcode`（需人工授权） |
 | 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` / `project version upgrade` |
 | 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `blueprint cancel` |
 
-演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题后 **127**。
+演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题 127 → 解决 video-tracking 崩溃 **128**。
 
 ## 本轮逐项解决的问题
 
@@ -94,18 +94,21 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 | `media vad` 报 AED 模型缺失 | 从本机剪映 11.6 版本目录复制 `aed40_10m.model` 到 11.5 运行时目录 | ✅ |
 | SDK 日志混入 stdout 导致结果无法解析 | `extract_json()` 从日志中抽取官方 JSON 信封 | ✅ |
 | `history undo/redo`、`blueprint cancel` 仅内嵌库可用 | 新增 `tools/draft_history.py`：基于工程文件快照的等价撤销/重做 | ✅ 替代实现 |
+| `draft algo video-tracking` 崩溃 `0xE06D7363` | 官方 `--tracker-type` 只接受 `1/motion`/`2/surface`（传别的会崩），且**必须 `--wait false`**：默认等待路径崩溃，异步提交成功 | ✅ 成功 |
+| `material recommend` / `material similar` 官方未实现 | 在 `lyra_cli` 增加手写封装 `material_recommend` / `material_similar`，用已实测可用的 `material search` 提供等价能力 | ✅ 替代实现 |
 
 ## 仍无法通过官方命令解决（附证据）
 
 | 项目 | 官方证据 |
 | --- | --- |
-| `material recommend` / `material similar` / `upgrade` / `project version upgrade` | `command is not implemented yet (work in progress)` |
-| `draft algo video-tracking`、`draft blueprint patch`、`draft template publish` | `internal error: process terminated by unhandled Windows exception 0xE06D7363`（官方进程崩溃，偶发） |
-| `draft algo material-understand`、`media understand` | 服务端 `stage=invalid_client_source`（客户端来源不被接受） |
-| `draft effect generate` | MotionGraph 上游 `Lumi HTTP request failed, status=404` |
+| `material recommend` / `material similar` / `upgrade` / `project version upgrade` | 二进制内含 `PLANNED USAGE ... fails with kCommonNotImplemented`；11.5 与 11.6 两个版本的 `lyra-cli.exe` 文案完全相同，升级版本不会改变 |
+| `draft blueprint patch` | 补齐必填 `--workspace` + `--patch-file`（含 `<patch></patch>` 与 insert/replace 节点）并 `--dry-run` 后仍崩 `0xE06D7363`；`blueprint init` + `blueprint sync` 均可正常完成，崩溃在 patch 执行阶段，与参数无关 |
+| `draft algo material-understand`、`media understand` | 服务端 `stage=invalid_client_source`；设置 `LYRA_CLI_APP_VERSION`（10.7.0 / 11.5 / 11.6）三种取值结果一致，且该字符串在 CLI 二进制里不存在，确认由服务端判定 |
+| `draft effect generate` | help 明确 `--execution TEXT:{cloud} REQUIRED`、`Currently only cloud is supported`，`local` 会被参数校验拒绝；走云端后上游返回 `Lumi HTTP request failed, status=404` |
+| `draft algo video-tracking` 的默认等待模式 | `--wait false` 可用，但默认 `--wait` 仍崩（官方缺陷）；`--tracking-time-range` 也会触发崩溃 |
 | `draft filter/effect remove·update` | 要求目标是 `segment_filter` / `segment_video_effect` 类型段，官方工程结构里滤镜/特效是片段属性而非独立段 |
 | `draft template add` | 需要真实官方模板包（喂普通 mp4 报 `unzip failed`） |
-| `draft algo query` / `wait` | 需要真实 video-tracking task id，而该命令本身崩溃 |
+| `draft algo query` / `wait` | 需要真实 video-tracking task id；`video-tracking` 用 `--wait false` 时只返回提交结果，不产出可查询的长任务 id |
 | `material download` / `material topic` | 资源池下载/类型不受支持 |
 | `lint command` | 需要 lyra-cli 源码仓库（本机只有运行时） |
 

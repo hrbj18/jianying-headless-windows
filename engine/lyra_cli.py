@@ -410,6 +410,26 @@ def material_download(cwd, resource_id, output_dir, timeout=900):
                 "--output-dir", output_dir], cwd, timeout, [cwd, output_dir])
 
 
+def material_recommend(cwd, kind, limit=None, timeout=300):
+    """推荐素材。
+
+    官方 ``material recommend`` 目前**尚未实现**（官方 help 里写明
+    "PLANNED USAGE ... fails with kCommonNotImplemented"，11.5 与 11.6 两个版本的
+    二进制里都是同一句文案），因此这里用已实测可用的 ``material search``
+    提供等价能力：按类型返回该类型的可下载素材。
+    """
+    return material_search(cwd, kind, limit=limit, timeout=timeout)
+
+
+def material_similar(cwd, kind, by, limit=None, timeout=300):
+    """查找相似素材。
+
+    官方 ``material similar`` 同样尚未实现；这里按关键词（``by``，通常是已有素材的
+    标题或描述）在同类素材里检索，作为等价替代。
+    """
+    return material_search(cwd, kind, prompt=by, limit=limit, timeout=timeout)
+
+
 def media_asr(cwd, input_path, language=None, output=None, clear_talking_head=False,
               timeout=1800):
     """本地音频转写（``media asr``），不写草稿。"""

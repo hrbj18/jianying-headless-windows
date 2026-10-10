@@ -108,6 +108,13 @@ python tools/functional_test.py --layer workflow    # 全新工程上跑完整�
   ```
 
   快照存放在 `%LOCALAPPDATA%\Temp\jianying-draft-history\<草稿名>`，不写进草稿目录。
+- `material recommend` / `material similar` 官方标记为"计划中未实现"（二进制里的文案是
+  `PLANNED USAGE ... fails with kCommonNotImplemented`，11.5 与 11.6 相同）。
+  `lyra_cli.material_recommend()` / `lyra_cli.material_similar()` 用 `material search`
+  提供等价能力。
+- `draft algo video-tracking` 必须用 `--wait false`：默认等待模式会让官方进程崩溃
+  （`0xE06D7363`），异步提交则正常返回；`--tracker-type` 只接受 `1/motion` 或
+  `2/surface`。
 
 ## 前置条件
 
