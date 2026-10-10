@@ -64,6 +64,27 @@ lyra_cli.algo_tts(draft_root, ref, text="你好", speaker="BV700_streaming")
 参数名支持尾部下划线写法（`from_` → `--from`、`in_` → `--in`），因为 Python 里
 `from` / `in` 不能直接作参数名。
 
+## 真实功能测试
+
+`tools/functional_test.py` 在剪映官方 VMSDK 沙箱里逐条真实执行清单命令，不做任何桩替身：
+
+```powershell
+python tools/functional_test.py --layer contract    # wrapper 白名单/严格模式 vs 实时 help
+python tools/functional_test.py --layer execute     # 195 条命令各真实跑一次
+python tools/functional_test.py --layer workflow    # 全新工程上跑完整剪辑链路
+```
+
+- 每条命令都真实调用 `lyra-cli <path> [--flag value ...]`，参数按实时 help 的
+  类型/必填/候选取值自动生成，并注入真实素材与真实 `--seg-id`。
+- 测试在 `%LOCALAPPDATA%\Temp\jianying-func-test` 建 ASCII 工作区，在剪映草稿根下用
+  `func-test-<时间戳>` 名字创建**独立测试工程**，测完删除；不读写用户其他工程。
+- 失败被归类为可解释的官方语义，而不是笼统的"失败"：`needs_login`（需要账号）、
+  `needs_prerequisite`（需要先有对应类型片段/真实资源 id）、`usage`（官方参数契约）、
+  `not_implemented` / `requires_embedded_library` / `model_missing`（官方能力边界）。
+- 报告同时写入 `work/functional-test/evidence/functional-*.json` 与同名 `.md`。
+- `lint` 系列用进程退出码表达"发现多少问题"（`result.automation_exit_code`），
+  官方 `err_code=0` 即命令成功，测试不会把它误判为调用失败。
+
 ## 前置条件
 
 1. **剪映主进程在运行**：`lyra-cli` 会校验父进程，非可信宿主直接返回

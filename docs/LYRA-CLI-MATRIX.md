@@ -56,10 +56,43 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 `None` 的参数会被跳过，`True` 表示只加开关。这条通道覆盖全部 `draft` 子命令，
 不需要为每个命令硬编码参数。
 
+## 逐条真实功能测试（`tools/functional_test.py`）
+
+在剪映官方 VMSDK 沙箱里对 195 条命令各真实执行一次，并在一个全新工程上跑完整剪辑链路。
+结果按官方语义归类，失败不等于缺陷：
+
+| 归类 | 条数 | 含义 |
+| --- | --- | --- |
+| ✅ 成功 | 87 | 官方返回 `err_code=0`，命令真实跑通 |
+| 🔐 需要登录 | 31 | `auth credential is missing: not logged in`，账号权益限制 |
+| ➡️ 需真实前置产物 | 31 | 需要工程里先有对应类型片段（`segment_text`/`segment_video`）、真实 task id、模板槽位或线上资源 |
+| ⚠️ 官方参数契约拒绝 | 22 | `RequiredError` / `ValidationError`：参数组合、互斥或取值域要求 |
+| ⚠️ 官方业务拒绝 | 14 | 资源下载、模板包解析等业务前置条件不满足 |
+| 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` 等 |
+| 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `trace` 明确只在被当作库内嵌时可用 |
+| 📦 本机缺模型 | 1 | `media vad` 报 AED 模型未安装 |
+| ⏱️ 超时 | 2 | `auth login` / `auth relogin` 是交互式登录，等待用户授权 |
+
+工作流层（16 步真实剪辑链路）成功 13 步：建工程 → 加主视频/画中画/文字/音频 → 导出结构取真实
+`seg_id` → 变速/裁剪/调色 → 关键帧 → 加字幕 → 加滤镜 → 导出模板包 → 最终结构校验；2 步是官方
+standalone 不支持的 `history undo/redo`，1 步是模板资源路径要求。
+
 ## 关键实测记录
 
 | 命令 | 观察 |
 | --- | --- |
+| 所有命令 | 工程必须放在剪映草稿根（`%LOCALAPPDATA%\JianyingPro\User Data\Projects\com.lveditor.draft`）下；工作区/草稿路径必须纯 ASCII，否则命令静默以 `exitCode=9` 失败 |
+| `draft project delete` | 会真实删除工程；之后任何命令报 `draft not found`，测试必须重建工程 |
+| `draft video speed/crop/adjust` 等 | `--seg-id` 与 `--seg-type`/`--target-track`/`--seg-index` **互斥**，同时传会被 `ValidationError` 拒绝 |
+| `draft video volume`、`draft text style`、`draft audio volume` | 参数名必须命中官方 handler 字段，否则报 `gen_patch --update has no registered handler for field(s)` |
+| `media trim-video` / `extract-frames` / `loudness` | `--end` 与 `--duration` 互斥，且 `--end` 必须大于 `--start` |
+| `media trim-audio` / `change-audio-speed` / `extract-audio` | `--output` 后缀必须是 `.aac`/`.m4a`/`.mp3` |
+| `media transcode-image` / `crop-image` / `resize-image` | `--format` 必须与 `--output` 后缀一致，否则报 `format conflicts with output suffix` |
+| `draft keyframe add/update/remove`、`curve set` | `--animated-property` 只接受 `position-x/position-y/scale/scale-x/scale-y/rotation/opacity/volume`；`--points` 必须带时间单位（`0s:0.2,1s:0.8`） |
+| `lint command` / `lint draft` / `lint trace` | 用进程退出码表达"发现多少问题"（`result.automation_exit_code`），`err_code=0` 仍是成功；`lint command` 需要 lyra-cli 源码仓库 |
+| `draft algo video-tracking` / `draft blueprint patch` | 官方进程以 `unhandled Windows exception 0xE06D7363` 崩溃（官方缺陷，非封装问题） |
+| `draft algo query` / `wait` | 需要真实 video-tracking task id，无法伪造 |
+| `auth login --require-jianying-app` | 本机剪映签名不被认可（`signature_not_official`），官方提示可用 `LYRA_CLI_ALLOW_DEV_JIANYING_APP=1` |
 | `auth login --require-jianying-app` | 本机剪映签名不被认可（`signature_not_official`），官方提示可用 `LYRA_CLI_ALLOW_DEV_JIANYING_APP=1` |
 | `auth login --link-url --no-wait` | 返回 `login_url`（300 秒有效）与 `device_code` / `user_code` / `session_handoff`，用户授权后补齐即可登录 |
 | `draft lyrics recognize --language zh` | 需要登录；`--mode draft` 会按音视频来源重复识别（本工程 100 条 → 去重 10 句） |
