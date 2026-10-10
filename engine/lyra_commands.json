@@ -1,6 +1,6 @@
 {
   "generated_from": "recursive lyra-cli <path> --help",
-  "count": 194,
+  "count": 195,
   "commands": [
     {
       "path": [
@@ -4447,10 +4447,37 @@
       ],
       "summary": "Move one or more complete segments between timelines in one batch.",
       "help_state": "ok"
+    },
+    {
+      "path": [
+        "draft",
+        "algo",
+        "object-matting-track"
+      ],
+      "options": [
+        "--help",
+        "--ref",
+        "--seg-id",
+        "--segment-time",
+        "--seed-mask-rle-json",
+        "--mask-rle-json",
+        "--target-object-desc",
+        "--sam3-target-object-desc",
+        "--feather",
+        "--expansion",
+        "--expand",
+        "--edge-size",
+        "--reverse",
+        "--sam3-debug-artifacts",
+        "--version",
+        "--jq"
+      ],
+      "summary": "Track object matting from a seed mask or a target description.",
+      "help_state": "ok"
     }
   ],
   "discovery": {
-    "probed": 239,
+    "probed": 241,
     "groups": [
       {
         "path": [],
@@ -4522,6 +4549,8 @@
           "upscale-resolution",
           "ai-frame-interpolation",
           "ai-matting",
+          "object-matting-track",
+          "mask-tracking-mattingTrack",
           "ai-transition",
           "custom-matting",
           "chroma-color-matting",
@@ -5058,6 +5087,17 @@
         ]
       }
     ],
-    "failures": []
+    "failures": [],
+    "unsupported": [
+      {
+        "path": [
+          "draft",
+          "algo",
+          "mask-tracking-mattingTrack"
+        ],
+        "state": "unsupported",
+        "error": "{\"response_ok\": true, \"result_ok\": false, \"exit_code\": 2, \"stderr\": \"\", \"stdout\": \"{\\\"err_category\\\":\\\"usage\\\",\\\"err_code\\\":-100003,\\\"err_msg\\\":\\\"cli parse error: ExtrasError: The following arguments were not expected: mask-tracking-mattingTrack\\\",\\\"recovery\\\":\\\"fix_input\\\",\\\"result\\\":null,\\\"severity\\\":\\\"failed\\\"}\\r\\n\"}"
+      }
+    ]
   }
 }

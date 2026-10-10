@@ -68,7 +68,11 @@ _OPTION_ROW_RE = re.compile(
     r"(?P<aliases>--[a-z][a-z0-9-]*(?:\{[^}]*\})?"
     r"(?:,\s*--[a-z][a-z0-9-]*(?:\{[^}]*\})?)*)"
 )
-_COMMAND_ROW_RE = re.compile(r"^ {2,8}([a-z][a-z0-9-]*)(?: {2,}\S|\s*$)")
+_COMMAND_TOKEN = r"[A-Za-z][A-Za-z0-9-]*"
+_COMMAND_ALIAS_ROW_RE = re.compile(
+    rf"^ {{2,8}}(?P<aliases>{_COMMAND_TOKEN}(?:,\s*{_COMMAND_TOKEN})+)(?:\s+.*)?$"
+)
+_COMMAND_ROW_RE = re.compile(rf"^ {{2,8}}({_COMMAND_TOKEN})(?: {{2,}}\S|\s*$)")
 
 
 @dataclass(frozen=True)
@@ -252,10 +256,16 @@ def parse_help(text):
         command_lines.extend(_section_lines(normalized, {heading}))
     subcommands, seen_commands = [], set()
     for line in command_lines:
-        match = _COMMAND_ROW_RE.match(line)
-        if match and match.group(1) not in seen_commands:
-            seen_commands.add(match.group(1))
-            subcommands.append(match.group(1))
+        alias_match = _COMMAND_ALIAS_ROW_RE.match(line)
+        if alias_match:
+            names = [name.strip() for name in alias_match.group("aliases").split(",")]
+        else:
+            match = _COMMAND_ROW_RE.match(line)
+            names = [match.group(1)] if match else []
+        for name in names:
+            if name not in seen_commands:
+                seen_commands.add(name)
+                subcommands.append(name)
     return {"summary": summary[:160], "options": options, "subcommands": subcommands}
 
 
@@ -271,7 +281,7 @@ def discover_commands(probe, previous=None, max_depth=8, seeds=DRAFT_DOMAIN_SEED
     # 官方父 help 会隐藏部分仍可调用的旧动作；把上一版路径作为回归种子逐条真实复核，
     # 既不靠手写动作树，也不会因父列表省略而静默删命令。
     queue = deque([(), *(tuple(path) for path in seeds), *previous_by_path])
-    seen, commands, groups, failures = set(), [], [], []
+    seen, commands, groups, failures, unsupported = set(), [], [], [], []
     probe_count = 0
 
     def safe_probe(path):
@@ -299,9 +309,14 @@ def discover_commands(probe, previous=None, max_depth=8, seeds=DRAFT_DOMAIN_SEED
             results = list(executor.map(safe_probe, batch))
             for path, result in zip(batch, results):
                 if result.state != "ok":
-                    failures.append({"path": list(path), "state": result.state,
-                                     "error": result.error})
-                    if path and result.state != "unsupported":
+                    record = {"path": list(path), "state": result.state,
+                              "error": result.error}
+                    if result.state == "unsupported" and path:
+                        # 这是完整的负向能力证据，不是探测失败；不安装 wrapper，单独留痕。
+                        unsupported.append(record)
+                        continue
+                    failures.append(record)
+                    if path:
                         old = previous_by_path.get(path)
                         if old is not None:
                             commands.append(dict(old))
@@ -334,6 +349,7 @@ def discover_commands(probe, previous=None, max_depth=8, seeds=DRAFT_DOMAIN_SEED
             "probed": probe_count,
             "groups": groups,
             "failures": failures,
+            "unsupported": unsupported,
         },
     }
     return payload
@@ -463,7 +479,8 @@ def main(argv=None):
     discovery = candidate["discovery"]
     ok = sum(1 for spec in candidate["commands"] if spec.get("help_state") == "ok")
     print(f"探测 {discovery['probed']} 个 help 节点，发现 {candidate['count']} 条叶命令，"
-          f"成功取参 {ok} 条，失败 {len(discovery['failures'])} 条")
+          f"成功取参 {ok} 条，失败 {len(discovery['failures'])} 条，"
+          f"官方不支持 {len(discovery.get('unsupported', []))} 条")
     print(("正在复核现有诊断证据 " if args.publish_evidence else "诊断证据已写入 ") +
           str(EVIDENCE_MANIFEST))
     if errors:

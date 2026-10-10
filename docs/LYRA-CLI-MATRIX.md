@@ -2,9 +2,10 @@
 
 本表由 `tools/enumerate_all_commands.py`（经剪映官方 VMSDK 递归调用真实 `--help`，
 通过发布门禁后产出 `engine/lyra_commands.json`）与 `tools/export_command_options.py`
-（导出指定命令的参数说明）实测得出，不是文档推测。本轮稳定探测 239 个 help 节点，清单
-登记 194 条叶命令，194 条均成功取得当前参数表，`discovery.failures` 为 0。另有 13 条旧路径
-被当前官方 CLI 以 `exitCode=2 / ExtrasError` 明确拒绝，复核后已从能力清单移除。
+（导出指定命令的参数说明）实测得出，不是文档推测。本轮稳定探测 241 个 help 节点，清单
+登记 195 条叶命令，195 条均成功取得当前参数表，`discovery.failures` 为 0。官方 help 展示的
+`draft algo mask-tracking-mattingTrack` 别名被官方自身以 `exitCode=2 / ExtrasError` 拒绝，已在
+`discovery.unsupported` 留痕而不安装 wrapper；另有 13 条同样被明确拒绝的旧路径已从能力清单移除。
 
 状态列含义：
 

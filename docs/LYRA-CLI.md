@@ -57,8 +57,9 @@ lyra_cli.algo_tts(draft_root, ref, text="你好", speaker="BV700_streaming")
   `(cwd, timeout, ref, options, workspace)` 调用。
 - **枚举失败不破坏权威清单**：探测结果先原子写入 `work/lyra-capabilities.json`；只有本次
   没有任何 help 失败、旧命令未消失、已成功参数表未退化、已知域齐全且成功率达标时，才
-  原子替换 `engine/lyra_commands.json`。可用 `--evidence-only` 明确只取证；只有人工复核后
-  才应使用 `--force` 接受退化结果。
+  原子替换 `engine/lyra_commands.json`。官方以 `exitCode=2 / ExtrasError` 明确拒绝的路径单独
+  记入 `discovery.unsupported`，不安装 wrapper，也不冒充暂态失败。可用 `--evidence-only`
+  明确只取证；只有人工复核后才应使用 `--force` 接受退化结果。
 
 参数名支持尾部下划线写法（`from_` → `--from`、`in_` → `--in`），因为 Python 里
 `from` / `in` 不能直接作参数名。

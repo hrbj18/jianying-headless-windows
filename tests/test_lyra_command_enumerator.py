@@ -127,6 +127,13 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(parsed["options"],
                          ["--path", "--input", "--curve", "--easing", "--ease"])
 
+    def test_parses_comma_command_aliases_with_official_camel_case(self):
+        help_text = """Algorithms.\n\nUSAGE:\n  lyra-cli draft algo <command>\n\nSUBCOMMANDS:\n  object-matting-track, mask-tracking-mattingTrack object matting from a seed mask.\n  video-tracking              Run video tracking.\n"""
+        parsed = enumerator.parse_help(help_text)
+        self.assertEqual(parsed["subcommands"],
+                         ["object-matting-track", "mask-tracking-mattingTrack",
+                          "video-tracking"])
+
 
 class ProbePayloadTests(unittest.TestCase):
     def payload(self, stdout=LEAF_HELP, response_ok=True, result_ok=True, exit_code=0,
@@ -188,8 +195,8 @@ class DiscoveryTests(unittest.TestCase):
         payload = enumerator.discover_commands(probe, previous=previous, seeds=())
         paths = {tuple(spec["path"]) for spec in payload["commands"]}
         self.assertNotIn(("draft", "project", "info"), paths)
-        self.assertTrue(any(failure["state"] == "unsupported"
-                            for failure in payload["discovery"]["failures"]))
+        self.assertTrue(any(item["state"] == "unsupported"
+                            for item in payload["discovery"]["unsupported"]))
 
     def test_recurses_through_every_help_level_instead_of_using_a_tree(self):
         mapping = {

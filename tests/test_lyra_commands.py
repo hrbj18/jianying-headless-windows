@@ -147,15 +147,21 @@ class InstallTests(unittest.TestCase):
         top_domains = {spec["path"][0] for spec in data["commands"]}
         self.assertTrue({"auth", "draft", "material", "media", "lint"} <= top_domains)
         specs = {tuple(spec["path"]): spec for spec in data["commands"]}
-        failures = (data.get("discovery") or {}).get("failures", [])
-        for failure in failures:
+        discovery = data.get("discovery") or {}
+        for failure in discovery.get("failures", []):
             with self.subTest(path=failure.get("path")):
                 path = tuple(failure.get("path") or ())
-                if failure.get("state") == "unsupported":
-                    self.assertNotIn(path, specs, "官方明确不支持的旧路径不得继续暴露")
-                else:
-                    self.assertIn(path, specs, "非确定性失败路径必须保留并明确标记非 ok")
-                    self.assertNotEqual(specs[path].get("help_state"), "ok")
+                self.assertIn(path, specs, "暂态失败路径必须保留并明确标记非 ok")
+                self.assertNotEqual(specs[path].get("help_state"), "ok")
+        for item in discovery.get("unsupported", []):
+            with self.subTest(unsupported=item.get("path")):
+                self.assertNotIn(tuple(item.get("path") or ()), specs,
+                                 "官方明确不支持的路径不得暴露 wrapper")
+        self.assertIn(("draft", "algo", "object-matting-track"), specs)
+        unsupported_paths = {tuple(item.get("path") or ())
+                             for item in discovery.get("unsupported", [])}
+        self.assertIn(("draft", "algo", "mask-tracking-mattingTrack"),
+                      unsupported_paths)
 
 
 if __name__ == "__main__":
