@@ -13,7 +13,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parent.parent
 LOCAL_DIRS = {'.git', 'work', '__pycache__', '.pytest_cache', '.venv'}
 LOCAL_CODEC = 'bridge/jy14_codec_hardened_11_4'
-SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt'}
+SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt', '.mjs'}
 SPECIAL = {'.gitignore', '.gitattributes', 'NOTICE', 'LICENSE'}
 # User-approved public IG case derivatives. Never turn this into a general
 # media extension allowance: exact bytes, size and path are release-reviewed.

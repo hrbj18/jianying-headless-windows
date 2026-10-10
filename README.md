@@ -24,12 +24,47 @@
 | 本地字体 | 新建文字或在副本中换字体，静态 OTF/TTF 随草稿保存；详见[字体说明](docs/LOCAL-FONTS.md) |
 | 基础动画 | 位置、缩放、旋转、透明度和音量的线性关键帧 |
 | 原生效果 | 六类静态几何蒙版、叠化转场、轻微抖动；需要匹配的本机资源与使用权限 |
+| 官方能力 | 生成并应用 TTS、歌词动效和剪同款模板请求，并通过官方 Lyra 链路渲染；资源 ref 与执行上下文由当前官方 Agent 会话提供 |
+| 自动歌词 | 使用本地 `faster-whisper` 从音频或 JYPACK 已用音乐区间生成逐词时间、SRT 和可直接构建的官方歌词计划 |
+| JYPACK 检查 | 只读校验 JY/ZIP、加密时间线、TTS 音频、逐字歌词和官方模板包证据 |
+| JYPACK 渲染 | 匹配剪映已导入的同一时间线，使用本机原生 ExportService 渲染 TTS、歌词模板、贴纸与动画 |
 | 编辑已有工程 | 检查源草稿，在独立副本中修改，不覆盖原项目 |
 | 原生视频导出 | 通过本机剪映引擎将已验证快照导出为 H.264/AAC MP4 |
 | 环境与工程检查 | 核对运行版本、组件身份、素材完整性和草稿保存结果 |
 
 核心流程为：**素材与剪辑计划 → 可编辑剪映草稿 → 原生引擎导出**。
 剪映中后续手工修改的内容不会自动同步回原计划或旧导出快照。
+
+剪映 11.5.0 自带 Agent Runtime 时，还可生成并应用 TTS、歌词动效和官方模板包的
+`DraftEditing` 请求，再调用官方 Lyra 链路渲染。入口、计划格式和资源边界见[官方能力适配](docs/OFFICIAL-FEATURES.md)。
+
+`engine/draftediting_runtime.py` 直接驱动官方 `lyra-cli` 的 blueprint 链路
+（`init` → `sync` → `apply`），把 Selection Expression 应用到真实草稿。
+宿主校验、命令契约、ASCII 路径、草稿根与主轨审计等实测硬约束见[官方 DraftEditing 链路](docs/DRAFTEDITING-RUNTIME.md)。
+
+`engine/headless_pipeline.py` 把「自动识别 → 官方歌词模板 → TTS → 官方渲染」串成一条无人值守的命令，
+对齐规则、每步产物与实测结果见[无头端到端流水线](docs/HEADLESS-PIPELINE.md)：
+
+```powershell
+python engine\headless_pipeline.py run `
+  --draft "C:\...\com.lveditor.draft\my-draft" `
+  --jypack C:\absolute\my-draft.jypack `
+  --out C:\absolute\work\pipeline-run-1 --model large-v3 --render
+```
+
+Windows 可直接从音频或已导入的 JYPACK 自动生成歌词。JYPACK 模式会避开 TTS 轨，
+识别实际使用的音乐区间，并把源音频时间换算到草稿时间轴：
+
+```powershell
+pip install -r requirements-lyrics.txt
+python engine\lyrics_generate.py `
+  --jypack C:\absolute\sample.jypack `
+  --model large-v3 `
+  --out C:\absolute\work\auto-lyrics
+```
+
+输出包含 `lyrics.json`、`lyrics.srt` 和 `official-features.plan.json`。模型默认只从本机缓存加载；
+首次下载需显式添加 `--allow-download`。完整参数与调用链见[官方能力适配](docs/OFFICIAL-FEATURES.md)。
 
 ## Hypit 协作案例
 
@@ -152,6 +187,10 @@ Skill 另收录于 [yichen-skills](https://github.com/mcncarl/yichen-skills/tree
 - 复合片段仅支持实验性的离线修改与冻结快照导出，尚不能交付为保存可靠的可编辑嵌套草稿。
 - 图片/GIF 样本曾出现间歇少一帧；严格帧数检查会拒绝缺帧输出，根因尚未解决。
 - 不支持任意剪映版本、任意效果组合、在线模板、资源下载、云端工程或账号权益获取。
+- 官方能力适配器不自行搜索或下载音色、歌词动画和模板；实际调用需要官方 Agent Runtime
+  提供的 `blueprint_ref`，并继续受账号权益、资源许可和客户端版本约束。
+- DraftEditing 链路只识别剪映草稿根下的草稿，且工作区路径必须为纯 ASCII；官方模板的
+  多输入槽位文本分发尚未打通，应用后需在剪映中核对槽位文案。
 - 高清黑白滤镜与橙色描边花字已退出支持范围；含这些效果的计划或旧快照会明确报错。
 - 工程结构检查、原生播放、视觉一致性、主观听感与素材许可是不同的验收项目。
 

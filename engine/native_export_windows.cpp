@@ -559,6 +559,18 @@ int main(int argc, char** argv) {
       std::printf("    ★ 从引擎回读草稿 %zu 字节（原始 %zu 字节）\n",
                   round_trip.size(), draft_json.size());
       std::printf("    前 200 字符: %.200s\n", round_trip.c_str());
+      // 保留引擎实际接收并规范化后的草稿，便于诊断模板、歌词等由
+      // DraftService 二次编译的材料。失败不阻断导出。
+      const std::string round_trip_path = std::string(argv[2]) + ".runtime.json";
+      std::ofstream round_trip_file(round_trip_path, std::ios::binary);
+      if (round_trip_file) {
+        round_trip_file.write(round_trip.data(),
+                              static_cast<std::streamsize>(round_trip.size()));
+        round_trip_file.close();
+        std::printf("    引擎回读草稿已写入: %s\n", round_trip_path.c_str());
+      } else {
+        std::printf("    · 无法写入引擎回读草稿: %s\n", round_trip_path.c_str());
+      }
     }
   } else {
     std::printf("    · 缺少 draftTransaction / GetJsonFromDraft 导出\n");

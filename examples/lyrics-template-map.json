@@ -1,0 +1,13 @@
+{
+  "schema": "jianying-lyrics-template-map/v1",
+  "lyrics": "absolute/path/to/lyrics.json",
+  "note": "卡与歌词句的对齐是显式决策：本地识别时间轴与原草稿歌词时间存在偏移，按重叠自动推断会把相邻句串进同一张卡。请把 lyrics 改成 lyrics_generate.py 产出的 lyrics.json 绝对路径，并逐卡核对 cues 索引。",
+  "cards": [
+    { "id": "t6", "cues": [1] },
+    { "id": "t7", "cues": [2] },
+    { "id": "t8", "cues": [3, 4] },
+    { "id": "t9", "cues": [5, 6] },
+    { "id": "t10", "cues": [7, 8] },
+    { "id": "t11", "cues": [9, 10, 11] }
+  ]
+}

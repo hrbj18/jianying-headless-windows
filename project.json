@@ -18,7 +18,7 @@
     "windows": {
       "architectures": ["x64"],
       "app_builds": ["11.5.0.14471"],
-      "capabilities": ["doctor", "build", "verify-build", "publish", "resume-publish", "verify", "edit-plan"],
+      "capabilities": ["doctor", "build", "verify-build", "publish", "resume-publish", "verify", "edit-plan", "generate-lyrics", "inspect-jypack", "render-jypack", "official-feature-request", "official-feature-apply", "official-template-render", "official-agent-call", "draftediting-blueprint", "headless-pipeline"],
       "unsupported": ["edit", "export"],
       "documentation": "docs/WINDOWS.md"
     }
