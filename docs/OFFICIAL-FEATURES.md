@@ -77,6 +77,24 @@ python engine\jypack_render.py `
 
 若尚未导入，可以显式增加 `--import-if-missing`。该选项通过剪映注册的 `-open-draft-pack` 参数启动导入，并等待同一时间线出现。命令不会修改已导入草稿；输出目录包含 `render.mp4`、`result.json`、`ffprobe.json`、编译日志和原生引擎日志。此路径不需要 `JIANYING_AGENT_RUNTIME_TOKEN`，但仍要求本机安装经过固定哈希与 Authenticode 校验的剪映 11.5.0.14471。
 
+### 全功能检查与成片报告
+
+检查报告只说明"模板里有什么"，成片才能证明"能否真的出片"。`tools/jypack_report.py` 把
+检查结果、渲染产物与声轨实测汇总成一份可复核的 markdown：
+
+```powershell
+python engine\jypack_inspect.py --input C:\absolute\sample.jypack --out C:\absolute\work\inspect.json
+python engine\jypack_render.py  --input C:\absolute\sample.jypack --out C:\absolute\work\render --import-if-missing
+python tools\jypack_report.py --inspect C:\absolute\work\inspect.json `
+  --render C:\absolute\work\render --audio C:\absolute\work\render\audio-check.wav `
+  --out C:\absolute\work\REPORT.md
+```
+
+报告包含：容器与 CRC 完整性、模板要素清单、包内 TTS 配音、歌词、渲染产物规格、声轨
+峰值/RMS 与抽帧清单。注意报告里的 `native_export_supported` 指的是**本项目自编译的简化
+导出器**；`jypack_render.py` 走的是剪映官方 `videoeditor.dll`，贴纸、文字模板与动画都由
+官方引擎处理，不受该字段限制。
+
 ## 生成 DraftEditing 请求
 
 复制并填写 `examples/official-features.plan.json` 中的真实 ref 和模板 `source_slot_id`，然后执行：

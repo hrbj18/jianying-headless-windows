@@ -1418,6 +1418,12 @@ def draft_digest(ctx):
 # --------------------------------------------------------------------------- CLI
 
 def main(argv=None):
+    # Windows 控制台默认 GBK，状态标签里的符号会触发 UnicodeEncodeError。
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--layer", choices=["contract", "execute", "workflow", "all"],
                         default="all")
@@ -1426,7 +1432,50 @@ def main(argv=None):
     parser.add_argument("--timeout", type=int, default=120, help="单条命令超时秒数")
     parser.add_argument("--keep-draft", action="store_true",
                         help="保留测试草稿工程便于人工复核（默认测完删除）")
+    parser.add_argument("--dump-specs", nargs="+", metavar="PATH",
+                        help="只打印这些命令的真实 help 参数规格，例如 "
+                             "draft/video/add media/compress")
+    parser.add_argument("--summarize", nargs="?", const="latest", metavar="REPORT",
+                        help="分析执行报告（默认最近一次）：状态归类与失败明细")
     args = parser.parse_args(argv)
+
+    if args.dump_specs:
+        for raw in args.dump_specs:
+            path = [part for part in raw.replace("\\", "/").split("/") if part]
+            text = load_help_text(path)
+            print("==", " ".join(path))
+            if not text:
+                print("   （没有真实 help 证据，先跑 --layer execute 或枚举器）")
+                continue
+            for spec in parse_option_specs(text):
+                if spec.flag in GLOBAL_FLAGS:
+                    continue
+                mark = "REQUIRED" if spec.required else ""
+                choices = f" choices={spec.choices[:4]}" if spec.choices else ""
+                print(f"   {spec.flag:26} {spec.type_token:30} {mark:9}{choices}")
+        return 0
+    if args.summarize:
+        reports = sorted(EVIDENCE_DIR.glob("functional-execute-*.json"))
+        if args.summarize != "latest":
+            reports = [Path(args.summarize)]
+        if not reports:
+            print("还没有执行报告；先运行 --layer execute", file=sys.stderr)
+            return 2
+        data = json.loads(reports[-1].read_text(encoding="utf-8"))
+        rows = data.get("execute", {}).get("rows", [])
+        counts = summarize(rows)
+        print("报告:", reports[-1])
+        print("合计:", len(rows), "条")
+        for state, count in sorted(counts.items(), key=lambda item: -item[1]):
+            print(f"  {STATE_LABELS.get(state, state):26} {count}")
+        print("\n未成功明细:")
+        for row in rows:
+            if row["state"] == "ok":
+                continue
+            message = (row.get("message") or "").replace("\n", " ")[:110]
+            print(f"  [{row['state']}] {' '.join(row['path'])}")
+            print(f"      {message}")
+        return 0
 
     WORK.mkdir(parents=True, exist_ok=True)
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)

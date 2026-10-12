@@ -94,6 +94,26 @@ python tools/functional_test.py --layer workflow    # 全新工程上跑完整�
 - **官方日志会污染 stdout**：个别命令把 EffectSDK 日志写在 JSON 前面，解析结果时必须
   从输出里抽取 JSON 信封，否则会把成功的命令误判成无法解析。
 
+### 排查"参数到底怎么传"
+
+官方 help 只列参数名，不写取值域、互斥与必填组合，这些约束常常只存在于 CLI 二进制里
+（例如 `--tracker-type` 只接受 `1/motion`、`2/surface`，`--wait false` 才能避开崩溃路径，
+模板资源必须用 `template://<id>`）。两个入口配合使用：
+
+```powershell
+# 1. 从二进制里挖约束：命中次数 + 上下文，可对比两个剪映版本
+python tools/mine_cli_strings.py
+python tools/mine_cli_strings.py --pattern template:// --pattern segment_filter
+python tools/mine_cli_strings.py --exe <11.6>/lyra-cli.exe --compare <11.5>/lyra-cli.exe
+
+# 2. 查某条命令的真实参数规格 / 归类最近一次执行结果
+python tools/functional_test.py --dump-specs draft/video/add media/compress
+python tools/functional_test.py --summarize
+```
+
+`--summarize` 会按官方语义给出状态分布与每条未成功命令的官方原文，便于区分
+"我们参数没用对"和"官方本身做不到"。
+
 ## 官方不支持项的替代实现
 
 - `draft history undo` / `draft history redo` / `draft blueprint cancel` 在 standalone
