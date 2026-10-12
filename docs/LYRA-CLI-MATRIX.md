@@ -63,15 +63,16 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 
 | 归类 | 条数 | 含义 |
 | --- | --- | --- |
-| ✅ 成功 | 128 | 官方返回 `err_code=0`，命令真实跑通 |
-| ➡️ 需真实前置产物 | 23 | 需要真实 task id、模板包/槽位、或官方不产生的段类型（`segment_filter` 等） |
-| ⚠️ 官方参数契约拒绝 | 19 | 算法类型不受支持、字段名/取值域等官方约束 |
-| ⚠️ 官方业务拒绝 | 13 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
+| ✅ 成功 | 138 | 官方返回 `err_code=0`，命令真实跑通 |
+| ➡️ 需真实前置产物 | 14 | 需要真实 task id、模板包/槽位、或官方不产生的段类型 |
+| ⚠️ 官方参数契约拒绝 | 17 | 算法类型不受支持、字段名/取值域等官方约束 |
+| ⚠️ 官方业务拒绝 | 15 | 官方进程崩溃、服务端拒绝、资源池下载失败等 |
 | ⏭️ 有意跳过 | 4 | `auth logout`（会真实登出）/ `auth login` / `relogin` / `qrcode`（需人工授权） |
 | 🚧 官方未实现 | 4 | `command is not implemented yet`：`material recommend` / `material similar` / `upgrade` / `project version upgrade` |
 | 🚧 仅内嵌库支持 | 3 | `draft history undo` / `redo` / `blueprint cancel` |
 
-演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源问题 127 → 解决 video-tracking 崩溃 **128**。
+演进：未登录 87 → 登录 VIP 102 → 解决参数与线上资源 127 → 解决 video-tracking 128 →
+穷尽排查后 **138**。
 
 ## 本轮逐项解决的问题
 
@@ -96,6 +97,16 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 | `history undo/redo`、`blueprint cancel` 仅内嵌库可用 | 新增 `tools/draft_history.py`：基于工程文件快照的等价撤销/重做 | ✅ 替代实现 |
 | `draft algo video-tracking` 崩溃 `0xE06D7363` | 官方 `--tracker-type` 只接受 `1/motion`/`2/surface`（传别的会崩），且**必须 `--wait false`**：默认等待路径崩溃，异步提交成功 | ✅ 成功 |
 | `material recommend` / `material similar` 官方未实现 | 在 `lyra_cli` 增加手写封装 `material_recommend` / `material_similar`，用已实测可用的 `material search` 提供等价能力 | ✅ 替代实现 |
+| `draft algo query` / `wait` 缺真实 task id | `video-tracking --wait false` 会返回真实 `task_id`（以及官方自己的 query/wait 命令）；seed 阶段真实提交一次该任务并把 id 注入 `--task-id` | ✅ query 成功（`wait` 仍崩，见下） |
+| `material download` 报资源池查询失败 | 两个真实原因：`--resource-id` 必须传**裸 id**（带 `vimo://` 会被拒），且 `--type` 必须与资源类型一致 | ✅ 成功 |
+| `material topic` 报 unsupported material type | `--type` 不能用 `text`；改用 `sticker` | ✅ |
+| `draft filter/effect remove·update` 报 target has type 'segment_video' | 顶层 `draft filter add` / `draft effect add` 才会创建独立的 `segment_filter` / `segment_video_effect` 段；seed 阶段先创建，再把该段 id 交给 remove/update | ✅ 成功（连带 `video filter/effect update·remove`、`text effect update`） |
+| `draft text-template add` / `subtitle template add` 报 "does not support local text template resources" | 模板类资源要用 `template://<id>`（由 `material search --type text_template/subtitle_template` 取得） | ✅ 成功 |
+| `draft keyframe update` / `remove` 报 requires exactly one of … | `update` 补 `--value`，`remove` 补 `--all` 选择器 | ✅ |
+| `draft blueprint resource` 报 exactly one of --search/--import/--update/--sync | 补真实 `--search` 检索表达式 | ✅ |
+| `draft video face-beauty` 报空字段 | 该命令字段是 `--skin/--shape/--feature/--amount` 等（不是 `--smooth`） | ✅ |
+| `draft video mix-mode` 报只作用于 PIP 段 | 轨道归属要从 `track.attributes.segments` 反查（片段节点 `parent_id` 指向 draft 而非 track），并只挑 PIP 上的 **video** 段 | ✅ |
+| `draft template render` 报 config 字段不支持 / 缺 schema_version | `--config` 必须覆盖写为 `{"schema_version": "2.0"}` | ✅ |
 
 ## 仍无法通过官方命令解决（附证据）
 
@@ -105,7 +116,14 @@ lyra_cli.draft(["video", "speed"], draft_root, "local://demo",
 | `draft blueprint patch` | 补齐必填 `--workspace` + `--patch-file`（含 `<patch></patch>` 与 insert/replace 节点）并 `--dry-run` 后仍崩 `0xE06D7363`；`blueprint init` + `blueprint sync` 均可正常完成，崩溃在 patch 执行阶段，与参数无关 |
 | `draft algo material-understand`、`media understand` | 服务端 `stage=invalid_client_source`；设置 `LYRA_CLI_APP_VERSION`（10.7.0 / 11.5 / 11.6）三种取值结果一致，且该字符串在 CLI 二进制里不存在，确认由服务端判定 |
 | `draft effect generate` | help 明确 `--execution TEXT:{cloud} REQUIRED`、`Currently only cloud is supported`，`local` 会被参数校验拒绝；走云端后上游返回 `Lumi HTTP request failed, status=404` |
-| `draft algo video-tracking` 的默认等待模式 | `--wait false` 可用，但默认 `--wait` 仍崩（官方缺陷）；`--tracking-time-range` 也会触发崩溃 |
+| `draft algo video-tracking` 的默认等待模式 | `--wait false` 可用，但默认 `--wait`、以及 `draft algo wait` 本身仍崩 `0xE06D7363`（官方缺陷）；`--tracking-time-range` 也会触发崩溃 |
+| `draft template publish` | 多数情况成功，偶发崩 `0xE06D7363` |
+| `draft template add` | 模板包能取到，但官方下载模板依赖时报 `draft dependency download failed` |
+| `draft template replace` | 需要真实模板槽位（`slot not found`），槽位名来自具体模板包 |
+| `draft adjust remove` | 需要 `segment_picture_adjust` 类型段；`draft adjust add` 在本机只产生片段属性，不产生该独立段 |
+| `draft algo denoise` / `voice-enhance` / `video-stabilize`（含 `draft video stabilize`） | 官方返回 `unsupported algorithm type: denoise / vocal_beautify / video_stable`，命令存在但算法未接入 |
+| `draft algo ai-transition` | 要求 `--after-seg-id` 之后存在**相邻**的同 render_index 视频段；测试工程未满足时官方直接拒绝 |
+| `material topic` | 资源池返回 `err_code=-7001 invalid …`（服务端查询失败） |
 | `draft filter/effect remove·update` | 要求目标是 `segment_filter` / `segment_video_effect` 类型段，官方工程结构里滤镜/特效是片段属性而非独立段 |
 | `draft template add` | 需要真实官方模板包（喂普通 mp4 报 `unzip failed`） |
 | `draft algo query` / `wait` | 需要真实 video-tracking task id；`video-tracking` 用 `--wait false` 时只返回提交结果，不产出可查询的长任务 id |

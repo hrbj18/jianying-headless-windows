@@ -358,6 +358,9 @@ SEGMENT_TYPE_BY_DOMAIN = {
     "text": "text", "subtitle": "text", "lyrics": "text", "text-template": "text",
     "audio": "audio",
     "sticker": "sticker",
+    # 顶层 filter/effect 域的命令操作独立段（extract 里 type 分别是 filter / effect）。
+    "filter": "filter",
+    "effect": "effect",
 }
 INDEX_FLAGS = {"--target-track", "--seg-index", "--index", "--track-index"}
 # 官方定位目标的方式互斥：--seg-id 与 --seg-type/--target-track/--seg-index/--time-window
@@ -391,7 +394,13 @@ PATH_EXTRA_ARGS = {
     # 官方要求 #RRGGBBAA 形式。
     ("draft", "algo", "chroma-color-matting"): {"--color": "#00FF00FF"},
     ("draft", "video", "adjust"): {"--brightness": "0.1"},
-    ("draft", "video", "face-beauty"): {"--smooth": "0.3", "--whiten": "0.3"},
+    ("draft", "video", "face-beauty"): {"--amount": "0.3"},
+    # keyframe update/remove 各自要求"恰好一个"选择器。
+    ("draft", "keyframe", "update"): {"--value": "0.5"},
+    # blueprint resource 要求恰好一个动作参数。
+    ("draft", "blueprint", "resource"): {
+        "--search": '{"mode":"knowledge_then_vimo","search":['
+                    '{"type":"subtitle_template","keyword":"歌词"}]}'},
     # video-tracking 需要完整目标框；官方 tracker-type 只接受 1/motion 或 2/surface，
     # 且必须 --wait false —— 默认等待路径会让官方进程崩溃（0xE06D7363）。
     ("draft", "algo", "video-tracking"): {
@@ -414,7 +423,8 @@ PATH_SKIP_FLAGS = {
     ("draft", "algo", "video-tracking"): {"--mode"},
     # 顶层 effect add 走 video_effect 路线；MotionGraph 专属参数会要求 --type motiongraph。
     ("draft", "effect", "add"): {"--dir", "--video-scope", "--runtime-source-timebase",
-                                 "--runtime-output-timebase", "--execution", "--prompt"},
+                                 "--runtime-output-timebase", "--execution", "--prompt",
+                                 "--name"},
 }
 # 这些 flag 一传就改变命令行为（清空/替换/等待/复制…），即使 help 给了 choices 也不该主动传。
 BEHAVIOR_SWITCH_HINTS = ("clear", "invert", "replace", "wait", "copy", "write", "delete",
@@ -439,13 +449,30 @@ RESOURCE_KIND_BY_PATH = {
     ("draft", "text", "effect", "update"): "effect",
     ("draft", "sticker", "add"): "sticker",
     ("draft", "effect", "add"): "effect",
+    # 顶层 filter/effect 域自己的 add 也要线上资源 id。
+    ("draft", "filter", "add"): "filter",
+    ("draft", "filter", "update"): "filter",
+    ("draft", "effect", "update"): "effect",
     # 这两个只接受 vimo://<id>（报错明确写 matting stroke / mix_mode supports vimo only）。
     ("draft", "video", "matting-stroke"): "effect",
     ("draft", "video", "mix-mode"): "effect",
+    # 模板类资源要用 template://<id>；本地文件会被官方拒绝
+    # （"does not support local text template resources"）。
+    ("draft", "text-template", "add"): "text_template",
+    ("draft", "text-template", "replace"): "text_template",
+    ("draft", "subtitle", "template", "add"): "subtitle_template",
+    ("draft", "subtitle", "template", "replace"): "subtitle_template",
+    ("draft", "template", "add"): "template",
+    ("draft", "template", "replace"): "template",
+    ("draft", "video", "transition", "add"): "transition",
 }
+# 这些类型的线上资源用 template:// 方案前缀。
+TEMPLATE_RESOURCE_KINDS = {"template", "text_template", "subtitle_template"}
 # 官方把一些"允许类"开关当作命令能跑起来的前提，help 里却不标 REQUIRED。
 PATH_SWITCH_FLAGS = {
     ("media", "measure-box"): ["--allow-video-decode"],
+    # keyframe remove 要求给出一个选择器，--all 是最安全的一个。
+    ("draft", "keyframe", "remove"): ["--all"],
 }
 
 # 这些命令会破坏测试环境或必须人工交互，自动化执行时必须跳过并留下原因。
@@ -487,6 +514,10 @@ FLAG_BY_PATH = {
     ("draft", "video", "mask", "add"): {"--resource-type": "rectangle"},
     ("draft", "video", "color", "smart-color"): {"--mode": "0"},
     ("draft", "effect", "add"): {"--type": "video_effect"},
+    # material download 的 --type 必须与 --resource-id 的类型一致，否则资源池查不到。
+    ("material", "download"): {"--type": "sticker"},
+    # topic 不支持 text 类型；官方提示可用 sticker/effect/transition 等。
+    ("material", "topic"): {"--type": "sticker"},
 }
 # 官方 help 有明确枚举语义的 flag：给真实合法值，避免"用错值"掩盖命令本身行为。
 FLAG_VALUE_DEFAULTS = {
@@ -548,9 +579,12 @@ def make_value(spec, ctx, path):
         return ctx.format_for(path, spec.choices)
     if spec.choices:
         return spec.choices[0]
+    if flag == "--task-id":
+        # algo query/wait 需要真实任务 id：由 seed 阶段真实提交的 video-tracking 任务提供。
+        return ctx.algo_task_id
     if flag == "--resource-id":
-        # material download 之类必须给真实线上资源 id。
-        return ctx.resource_id("sticker") or ctx.resource_id("effect")
+        # material download / query 要裸资源 id；带 scheme 会被资源池拒绝。
+        return ctx.raw_resource_id("sticker") or ctx.raw_resource_id("effect")
     if flag == "--target":
         # 官方 selector 语法：seg_id=<真实 id>（见 draft edit 的 SELECTORS 段）。
         return f"seg_id={ctx.seg_id}" if ctx.seg_id else None
@@ -669,6 +703,7 @@ class TestContext:
         self.create_outcome = None
         self.format_cache = {}
         self.resources = {}
+        self.algo_task_id = None
         self.generic = {}
         self.notes = []
         self.draft_root = None
@@ -688,6 +723,7 @@ class TestContext:
         if not self.resources:
             self._seed_resources()
         self._seed_content()
+        self._seed_algo_task()
         self.snapshot()
 
     def _seed_content(self):
@@ -718,6 +754,16 @@ class TestContext:
             seeds.append(("sticker", ["draft", "sticker", "add", "--ref", self.ref,
                                       "--resource", online, "--start", "0s",
                                       "--duration", "1s"]))
+        # 顶层 filter/effect add 会创建独立段；filter/effect 域的 remove、update
+        # 只有拿到这些段 id 才能工作（否则报 target has type 'segment_video'）。
+        filter_uri = self.resource_id("filter")
+        if filter_uri:
+            seeds.append(("filter", ["draft", "filter", "add", "--ref", self.ref,
+                                     "--resource", filter_uri]))
+        effect_uri = self.resource_id("effect")
+        if effect_uri:
+            seeds.append(("effect", ["draft", "effect", "add", "--ref", self.ref,
+                                     "--resource", effect_uri, "--type", "video_effect"]))
         for kind, args in seeds:
             outcome = self.cli(args, cwd=str(self.root),
                                read_write=self.read_write_paths(),
@@ -738,19 +784,19 @@ class TestContext:
         self.seg_ids = [value for kind in SEGMENT_TYPES
                         for value in self.ids_by_type.get(kind, [])]
         self.seg_id = self.seg_ids[0] if self.seg_ids else None
-        # 记录每个段所属轨道，mix_mode 之类只对 PIP（track_index > 0）段生效。
+        # 轨道归属要从 track 节点的 attributes.segments 反查：
+        # 片段节点的 parent_id 指向 draft，而不是 track。
         self.seg_track = {}
-        tracks = {node.get("id"): (node.get("attributes") or {}).get("track_index")
-                  for node in (structure or [])
-                  if isinstance(node, dict) and node.get("type") == "track"}
         for node in (structure or []):
-            if not isinstance(node, dict) or node.get("type") not in SEGMENT_TYPES:
+            if not isinstance(node, dict) or node.get("type") != "track":
                 continue
-            index = tracks.get(node.get("parent_id"))
-            if index is not None:
-                self.seg_track[node.get("id")] = index
-        self.pip_seg_id = next((seg for seg, index in self.seg_track.items()
-                                if isinstance(index, int) and index > 0), None)
+            index = (node.get("attributes") or {}).get("track_index")
+            for seg in ((node.get("attributes") or {}).get("segments") or []):
+                self.seg_track[seg] = index
+        self.pip_seg_id = next(
+            (seg for seg in (self.ids_by_type.get("video") or [])
+             if isinstance(self.seg_track.get(seg), int) and self.seg_track[seg] > 0),
+            None)
         self.seed_steps.append({"kind": "extract-summary", "state": summary.state,
                                 "ids": {k: v[:3] for k, v in self.ids_by_type.items()},
                                 "all_ids": self.seg_ids[:5]})
@@ -866,14 +912,48 @@ class TestContext:
                 return self.ids_by_type[kind][0]
         return None
 
+    def _seed_algo_task(self):
+        """提交一个真实的 video-tracking 任务，供 algo query/wait 使用真实 task id。
+
+        ``--wait false`` 是关键：默认等待模式会让官方进程崩溃（0xE06D7363），
+        异步提交会返回 ``task_id`` 与官方自己的 query/wait 命令。
+        """
+        if not self.seg_id:
+            return
+        outcome = self.cli(
+            ["draft", "algo", "video-tracking", "--ref", self.ref,
+             "--seg-id", self.seg_id, "--source-seg-id", self.seg_id,
+             "--tracker-type", "1", "--wait", "false",
+             "--center-x", "0.5", "--center-y", "0.5",
+             "--width", "0.2", "--height", "0.2"],
+            cwd=str(self.root), read_write=self.read_write_paths())
+        task_id = None
+        if outcome.ok:
+            body = extract_json(outcome.stdout)
+            result = body.get("result") if isinstance(body, dict) else None
+            if isinstance(result, dict):
+                task_id = result.get("task_id")
+        self.algo_task_id = task_id
+        self.seed_steps.append({"kind": "algo-task", "state": outcome.state,
+                                "task_id": task_id})
+
     def resource_id(self, kind):
-        """返回真实的线上资源 URI（vimo://<id>），没有可用资源时返回 None。"""
+        """返回真实的线上资源 URI；模板类用 template://，其余用 vimo://。"""
         ids = self.resources.get(kind) or []
-        return ("vimo://" + ids[0]) if ids else None
+        if not ids:
+            return None
+        scheme = "template" if kind in TEMPLATE_RESOURCE_KINDS else "vimo"
+        return f"{scheme}://{ids[0]}"
+
+    def raw_resource_id(self, kind):
+        """裸资源 id（material download / query 要的是裸 id，带 scheme 会被拒）。"""
+        ids = self.resources.get(kind) or []
+        return ids[0] if ids else None
 
     def _seed_resources(self):
         """用官方 material search 抓取真实线上资源 id（各类型一个即可）。"""
-        for kind in ("sticker", "effect", "filter", "animation"):
+        for kind in ("sticker", "effect", "filter", "animation", "transition",
+                     "text_template", "subtitle_template", "template"):
             outcome = self.cli(["material", "search", "--type", kind, "--prompt", "花",
                                 "--limit", "1"],
                                cwd=str(self.root), read_write=[str(self.root)])
@@ -900,11 +980,14 @@ class TestContext:
         return "local://" + self.ref_name + "-copy"
 
     def template_config(self):
-        """template render 的 --config 必须是 JSON 文件（传 mp4 会解析失败）。"""
+        """template render 的 --config 必须是 JSON 文件（传 mp4 会解析失败）。
+
+        每次覆盖写：官方只接受自己认识的字段，残留的旧内容会让它报
+        "template config contains unsupported field"。
+        """
         path = self.out_dir / "template-config.json"
-        if not path.is_file():
-            path.write_text(json.dumps({}, ensure_ascii=False, indent=2),
-                            encoding="utf-8", newline="\n")
+        path.write_text(json.dumps({"schema_version": "2.0"}, ensure_ascii=False, indent=2),
+                        encoding="utf-8", newline="\n")
         return path
 
     def fresh_workspace(self, clear=False):
@@ -1152,7 +1235,8 @@ def media_uri(path):
 
 
 # 官方 extract/blueprint 结构里真正代表"片段"的类型。
-SEGMENT_TYPES = ("video", "text", "audio", "sticker", "image", "photo")
+SEGMENT_TYPES = ("video", "text", "audio", "sticker", "image", "photo",
+                 "filter", "effect")
 
 
 def find_ids(node, wanted_type=None, key=("id", "segment_id", "seg_id")):
