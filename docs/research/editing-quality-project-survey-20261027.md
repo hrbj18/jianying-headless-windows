@@ -25,7 +25,7 @@ OVS 已依赖 HyperFrames；是上层方法与底层实现的关系，不能计�
 - 因题材不同，未来可迁移“实拍证据→必要图解→视觉重点→回到实拍”的表达逻辑；金融数据、人物关系和原片数字不能冒充目标活动事实。是否需要旁白、图表、哪些真实数据支撑，属于下一轮创作决策。
 - 本机 nvidia-smi：RTX3050，6144MiB显存。不能把大模型论文性能等同于本机运行能力。
 
-图像证据：[全片概览1](media/reference-contact-1.jpg)、[全片概览2](media/reference-contact-2.jpg)、[饼图变化局部](media/reference-detail-0233-0255.jpg)。原视频未拷贝进仓库。
+图像证据：`全片概览1`（历史参考图：`media/reference-contact-1.jpg`，未随源码分发）、`全片概览2`（历史参考图：`media/reference-contact-2.jpg`，未随源码分发）、`饼图变化局部`（历史参考图：`media/reference-detail-0233-0255.jpg`，未随源码分发）。原视频未拷贝进仓库。
 
 ## 搜索与评分方法
 

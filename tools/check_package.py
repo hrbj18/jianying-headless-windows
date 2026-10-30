@@ -109,6 +109,7 @@ def source_files():
 
 def main():
     files = source_files()
+    included_paths = {path.resolve() for path in files}
     inventory = {}
     for path in files:
         relative = path.relative_to(ROOT).as_posix()
@@ -135,7 +136,9 @@ def main():
                     continue
                 target = target.split('#', 1)[0]
                 target = re.sub(r':\d+(?::\d+)?$', '', target)
-                require((path.parent / target).is_file(), 'Broken relative link in ' + relative + ': ' + target)
+                destination = path.parent / target
+                require(destination.is_file() and destination.resolve() in included_paths,
+                        'Broken or unpackaged relative link in ' + relative + ': ' + target)
         inventory[relative] = hashlib.sha256(raw).hexdigest()
 
     shared_pins = None
