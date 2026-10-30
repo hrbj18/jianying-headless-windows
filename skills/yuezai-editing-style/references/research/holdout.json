@@ -1,0 +1,197 @@
+{
+  "schema": "yuezai-style-holdout-review/v1",
+  "training_profile_sha256": "fb273b51e9171d1679920e5e53d21a15a7b732079d519b7dba48e84534482231",
+  "training_rules_changed_after_holdout": false,
+  "scope": "4 independent videos; qualitative evidence check, not popularity or exhaustive recall evaluation",
+  "checks": [
+    {
+      "reference_index": 1,
+      "task_id": "8eb8dc973bef511cbf170a02ff73973637fcc6e971f76700e32d0add8a65e1d4",
+      "rule_ids": [
+        "R01",
+        "R03",
+        "R04",
+        "R05",
+        "R06"
+      ],
+      "result": "supports",
+      "observation": "奶奶笑容、握手与站立同框；黄字；告别在先，最后品牌卡；不用强加冲突冷开场",
+      "start": 0.44,
+      "end": 94.1,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S009:R1C3",
+        "CHAPTER-001-S009:R2C3",
+        "CHAPTER-001-S009:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000030",
+        "ASR-000031"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S009"
+      ]
+    },
+    {
+      "reference_index": 28,
+      "task_id": "9153f23ca6a5c4bcefa9469b11ed6c810bd5a7662ccd2193cb1d48f673ae8e21",
+      "rule_ids": [
+        "R01",
+        "R03",
+        "R05",
+        "R06"
+      ],
+      "result": "supports",
+      "observation": "双语问答、机器狗表演、真人惊讶、最后合照与品牌卡形成结果",
+      "start": 0.16,
+      "end": 63.4,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S001:R3C3",
+        "CHAPTER-001-S009:R1C1",
+        "CHAPTER-001-S009:R1C2",
+        "CHAPTER-001-S009:R1C3"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000023",
+        "ASR-000024"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S009"
+      ]
+    },
+    {
+      "reference_index": 28,
+      "task_id": "9153f23ca6a5c4bcefa9469b11ed6c810bd5a7662ccd2193cb1d48f673ae8e21",
+      "rule_ids": [
+        "R04"
+      ],
+      "result": "partial",
+      "observation": "正文为白色或浅色字加红色描边，与黄色默认不同；说明黄字只能作常见子类，不能宣称统一色值",
+      "start": 1.4,
+      "end": 6.4,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S001:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000002",
+        "ASR-000003"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S009"
+      ]
+    },
+    {
+      "reference_index": 50,
+      "task_id": "981f7ccfa31acf9f6348bcb2bb9e75666188ec492b72eee8edb5e521bd33663a",
+      "rule_ids": [
+        "R01",
+        "R03",
+        "R05",
+        "R06"
+      ],
+      "result": "supports",
+      "observation": "真实握手失败到恢复、道歉和紧张的结果闭环；问号、汗滴、尴尬字只在动作/反应处出现；没有品牌结尾仍成立",
+      "start": 0.24,
+      "end": 32.6,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S001:R3C3",
+        "CHAPTER-001-S007:R1C1",
+        "CHAPTER-001-S007:R2C1"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000004"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S007"
+      ]
+    },
+    {
+      "reference_index": 50,
+      "task_id": "981f7ccfa31acf9f6348bcb2bb9e75666188ec492b72eee8edb5e521bd33663a",
+      "rule_ids": [
+        "R04"
+      ],
+      "result": "partial",
+      "observation": "白色较细正文加少量黄色关键词，并非黄粗体；字色和粗细没有跨全部holdout复现",
+      "start": 0.24,
+      "end": 4.1,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R3C1",
+        "CHAPTER-001-S001:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S007"
+      ]
+    },
+    {
+      "reference_index": 65,
+      "task_id": "7296a2467d4a02a10e8a40a8f30a871f497f0ee5d18e4daa7f5ecfba156cb28a",
+      "rule_ids": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R06"
+      ],
+      "result": "supports",
+      "observation": "0.24秒“咋看出来的”先行，23.12秒重复解释身份判断；中后段祝婚姻、摸头、表演，最后告别后品牌卡；黄字与白字区分说话人",
+      "start": 0.24,
+      "end": 80.8,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S008:R1C1",
+        "CHAPTER-001-S008:R2C1",
+        "CHAPTER-001-S008:R2C2",
+        "CHAPTER-001-S008:R3C1"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000004",
+        "ASR-000013",
+        "ASR-000014",
+        "ASR-000029",
+        "ASR-000030"
+      ],
+      "reviewed_sheet_ids": [
+        "CHAPTER-001-S001",
+        "CHAPTER-001-S008"
+      ]
+    }
+  ],
+  "conclusion": "人物与机器狗同框、完整互动闭环、真实反应和可选短品牌收尾在holdout继续得到支持；黄色粗字幕只有常见子类意义，2/4留出片颜色/粗细明显不同。冷开场是有条件选择，不是每条片必备。音乐未验证。"
+}

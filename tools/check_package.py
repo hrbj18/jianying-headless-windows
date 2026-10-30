@@ -11,10 +11,32 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
-LOCAL_DIRS = {'.git', 'work', '__pycache__', '.pytest_cache', '.venv'}
+LOCAL_DIRS = {'.git', 'work', 'outputs', '.local', '__pycache__', '.pytest_cache', '.venv', 'venv'}
 LOCAL_CODEC = 'bridge/jy14_codec_hardened_11_4'
-SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt', '.mjs'}
+SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt', '.mjs', '.ps1', '.lua', '.csv', '.ts'}
 SPECIAL = {'.gitignore', '.gitattributes', 'NOTICE', 'LICENSE'}
+OWN_LIVE_BRIDGE = 'bridge/live-editor/live-qt-pipe-v02.dll'
+SKILL_WRAPPERS = (
+    'skills/yichen-jianying-edit/scripts/headless_draft.py',
+    'skills/yichen-jianying-edit-standalone/scripts/headless_draft.py',
+)
+REQUIRED_SKILL_PINS = {
+    'native_fonts.py', 'runtime_profiles.py', 'jy14_headless.py', 'native_motion.py',
+    'native_effects.py', 'native_resources.py', 'native_visual_effects.py',
+    'native-resource-catalog.json', 'native_compound.py', 'compound-blueprint.json',
+    'native_edit.py', 'native_export.py', 'native_export.cpp', 'native_export_windows.cpp',
+    'headless_runtime.py', 'windows_runtime.py', 'blueprint.json',
+    'local_config.py', 'draftediting_runtime.py', 'draftediting_worker.mjs',
+    'windows_edit_actions.py', 'windows_native_preview.py', 'windows_preview_client.mjs',
+    'windows_vfx.py', 'windows-vfx-catalog.json', 'windows_mask_protocol.py',
+    'windows-mask-runtime.json', 'windows_vfx_packaging.py',
+    'windows_mask_controls.py', 'windows_mask_keyframes.py', 'windows_timeline_patch.py',
+    'windows_transition_compat.py', 'windows_transition_adapters/dissolve.lua',
+    'windows_transition_adapters/fog.lua',
+    'analysis_store.py', 'cloud_asr.py', 'media_evidence.py', 'material_analysis.py', 'analysis_edit.py',
+    'editing_style.py',
+    'delivery_lifecycle.py', 'media_store.py', 'workspace_cleanup.py', 'story_edit.py',
+}
 # User-approved public IG case derivatives. Never turn this into a general
 # media extension allowance: exact bytes, size and path are release-reviewed.
 PUBLIC_MEDIA = {
@@ -57,6 +79,13 @@ def literal(path, name):
 
 
 def source_files():
+    selected = None
+    if (ROOT / '.git').exists():
+        result = subprocess.run(
+            ['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'],
+            cwd=ROOT, check=True, capture_output=True,
+        )
+        selected = {name.decode('utf-8') for name in result.stdout.split(b'\x00') if name}
     files = []
     for folder, directories, names in os.walk(ROOT, followlinks=False):
         for name in directories:
@@ -65,10 +94,14 @@ def source_files():
         for name in names:
             path = Path(folder) / name
             relative = path.relative_to(ROOT).as_posix()
+            if selected is not None and relative not in selected:
+                continue
             if relative == LOCAL_CODEC:
                 continue
+            if relative == 'local-settings.json':
+                continue  # Machine-local paths are not distributable project source.
             require(path.is_file() and not path.is_symlink(), 'Nonregular source: ' + relative)
-            require(path.suffix in SUFFIXES or name in SPECIAL or relative in PUBLIC_MEDIA,
+            require(path.suffix in SUFFIXES or name in SPECIAL or relative in PUBLIC_MEDIA or relative == OWN_LIVE_BRIDGE,
                     'Unexpected source type: ' + relative)
             files.append(path)
     return sorted(files)
@@ -79,6 +112,11 @@ def main():
     inventory = {}
     for path in files:
         relative = path.relative_to(ROOT).as_posix()
+        if relative == OWN_LIVE_BRIDGE:
+            manifest = json.loads((path.parent / 'manifest.json').read_text(encoding='utf-8'))
+            require(digest(path) == manifest['files'][path.name], 'Own live bridge bytes differ')
+            inventory[relative] = digest(path)
+            continue
         if relative in PUBLIC_MEDIA:
             inventory[relative] = verify_public_media(path, relative)
             continue
@@ -96,12 +134,30 @@ def main():
                 if '://' in target or target.startswith('#'):
                     continue
                 target = target.split('#', 1)[0]
+                target = re.sub(r':\d+(?::\d+)?$', '', target)
                 require((path.parent / target).is_file(), 'Broken relative link in ' + relative + ': ' + target)
         inventory[relative] = hashlib.sha256(raw).hexdigest()
 
-    wrapper = ROOT / 'skills/yichen-jianying-edit/scripts/headless_draft.py'
-    for name, expected in literal(wrapper, 'PINS').items():
-        require(digest(ROOT / 'engine' / name) == expected, 'Skill pin differs: ' + name)
+    shared_pins = None
+    for relative in SKILL_WRAPPERS:
+        wrapper = ROOT / relative
+        require(wrapper.is_file() and not wrapper.is_symlink(), 'Missing or nonregular Skill wrapper: ' + relative)
+        pins = literal(wrapper, 'PINS')
+        require(isinstance(pins, dict) and REQUIRED_SKILL_PINS <= set(pins),
+                'Skill pin set omits required components: ' + relative)
+        if shared_pins is None:
+            shared_pins = pins
+        else:
+            require(pins == shared_pins, 'Skill wrapper pin sets or hashes differ: ' + relative)
+        for name, expected in pins.items():
+            path = ROOT / 'engine' / name
+            nested_adapter = name in {'windows_transition_adapters/dissolve.lua', 'windows_transition_adapters/fog.lua'}
+            nested_adapter = nested_adapter or (Path(name).parent == Path('live_editor') and Path(name).suffix == '.py')
+            require((Path(name).name == name or nested_adapter) and isinstance(expected, str) and
+                    bool(re.fullmatch(r'[0-9a-f]{64}', expected)),
+                    'Invalid Skill pin: ' + relative + ': ' + name)
+            require(path.is_file() and not path.is_symlink() and digest(path) == expected,
+                    'Skill pin differs: ' + relative + ': ' + name)
     runtime = ROOT / 'engine/headless_runtime.py'
     manifest_path = ROOT / 'bridge/SOURCE_MANIFEST.json'
     require(digest(manifest_path) == literal(runtime, 'IO_MANIFEST_SHA'), 'IO manifest pin differs')
@@ -123,6 +179,7 @@ def main():
     print(json.dumps({'status': 'source-checks-passed', 'files': len(files), 'inventory_sha256': fingerprint,
                       'official_binaries_in_source_inventory': False, 'network_called': False,
                       'approved_public_media': len(set(inventory).intersection(PUBLIC_MEDIA)),
+                      'skill_wrappers_verified': len(SKILL_WRAPPERS), 'skill_pinned_components': len(shared_pins),
                       'scope': 'syntax, known privacy patterns, relative links, source pins and tracked-file boundary'}))
 
 

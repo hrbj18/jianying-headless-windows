@@ -1,0 +1,12 @@
+{
+  "jianying_install_dir": "C:\\path\\to\\JianyingPro\\11.4.7.14462",
+  "ffmpeg_bin": "C:\\path\\to\\ffmpeg\\bin",
+  "workspace_root": "C:\\JianyingHeadless\\work",
+  "draft_root": "D:\\VideoProjects\\JianyingPro Drafts",
+  "draft_index_path": "C:\\Users\\YOUR_NAME\\AppData\\Local\\JianyingPro\\User Data\\Projects\\com.lveditor.draft\\root_meta_info.json",
+  "analysis": {
+    "credential_files": [],
+    "asr_model": "qwen-audio-3.1-asr-flash-filetrans",
+    "chunk_seconds": 600
+  }
+}

@@ -1,13 +1,19 @@
 # 官方 DraftEditing / Blueprint 链路
 
 `engine/draftediting_runtime.py` 通过剪映自带的官方 VMSDK 调用 `lyra-cli.exe`，
-从而获得与编辑器内部完全一致的草稿编译与渲染链路。它不实现资源服务、不读取
+让 Selection Expression 经官方草稿编译与写回链路执行。它不实现资源服务、不读取
 账号数据、不提取运行令牌，也不分发任何官方二进制。
+
+Windows 正常入口是 `jianying.ps1 lyra ...`，使用项目 `.venv` 与根目录的个人
+`local-settings.json`。已审核构建为 `11.4.7.14462` 和 `11.5.0.14471`，分别绑定精确 DLL 指纹，
+并验证 EXE 文件版本与签名。完整操作流程和 Codex 的 `jianying-windows` 技能见
+[Windows 调用指南](WINDOWS-CLI.md)。处理的是已保存磁盘草稿，不同步 GUI 内未保存的内存时间线。
 
 命令契约取自同版本 `Resources/canvas_agent/runtime/app-server.mjs`：
 
 | 命令 | 用途 |
 | --- | --- |
+| `draft project create --dir R --ref local://N` | 在父目录 R 中创建名为 N 的独立工程 |
 | `draft blueprint init --workspace W` | 初始化工作区（生成 blueprint.json、target/current XML、id_map、resource_map） |
 | `draft blueprint sync --workspace W --ref local://N [--current-only]` | 把草稿编译为 canonical XML |
 | `draft blueprint apply --workspace W --dir D --ref local://N --selection-file F --allow-existing-main-deletion --allow-existing-subtitle-changes` | 应用 Selection Expression 并回写草稿 |
@@ -20,33 +26,46 @@
 
 1. **剪映主进程**（`JianyingPro.exe`）作为受信任宿主；
 2. **官方 VMSDK**（`agent_runtime_addon.node` 与 `vm_sdk`）；
-3. 签名有效、且 **PE 内部名为 `bun-packaged-server.exe`** 的官方 Bun 副本。
+3. 签名有效、以 **`bun-packaged-server.exe` 名称运行**的官方 Bun 副本。
 
 第 3 项的实现方式是把安装目录里的官方 `bun.exe` 复制为同名副本（字节一致、
-Authenticode 仍有效）。仅改文件名不足以通过，复制官方字节可以。整个过程由
-`ensure_packaged_bun()` 校验 SHA-256 与签名后使用，不修改官方文件内容。
+Authenticode 仍有效）。`ensure_packaged_bun()` 校验其与官方 `bun.exe` 的 SHA-256 一致且签名有效。
+这会在安装目录按需新增 Bun 副本，不修改原 `bun.exe` 内容，也不伪造父进程或开启开发信任开关。
 
 自检：
 
 ```powershell
-$env:PYTHONUTF8 = "1"
-python engine\draftediting_runtime.py doctor
+.\jianying.ps1 doctor
+.\jianying.ps1 lyra doctor
 ```
+
+总入口 `doctor` 检查精确身份、签名、媒体工具与导出编译器；`lyra doctor` 只读检查组件与
+宿主状态，不启动剪映、不新增 Bun 副本。动作命令通过总入口执行时会自动复用或启动已验签宿主；
+直接使用 Python 子入口时可加 `--start-editor`。
 
 ## 运行
 
 ```powershell
-# 1. 初始化（工作区必须是纯 ASCII 的空目录或不存在）
-python engine\draftediting_runtime.py init --workspace C:\Temp\jy-ws
+# 1. 生成任务目录；使用输出中的 job、draft_root 和 blueprint
+.\jianying.ps1 workspace --name demo
+$job = '<返回的job绝对路径>'
+$draftRoot = Join-Path $job 'drafts'
+$workspace = Join-Path $job 'blueprint'
+$draft = Join-Path $draftRoot 'demo'
+$ref = 'local://demo'
 
-# 2. 把草稿编译为 canonical XML（--ref 是引用，解析根为 --draft-root）
-python engine\draftediting_runtime.py sync --workspace C:\Temp\jy-ws `
-  --ref local://my-draft --draft-root "C:\...\com.lveditor.draft"
+# 2. 初始化空工作区并新建任务内工程
+.\jianying.ps1 lyra init --workspace $workspace
+.\jianying.ps1 lyra create --draft-root $draftRoot --ref $ref
+.\jianying.ps1 lyra sync --workspace $workspace --ref $ref --draft-root $draftRoot
 
-# 3. 应用 Selection（草稿必须在剪映草稿根下）
-python engine\draftediting_runtime.py apply --workspace C:\Temp\jy-ws `
-  --draft-dir "C:\...\com.lveditor.draft\my-draft" --ref local://my-draft `
-  --selection-file C:\Temp\jy-ws\edit.selection
+# 3. 导入任务内素材，并按真实资源ref及片段ID编写Selection
+.\jianying.ps1 lyra resource-import --workspace $workspace --draft-root $draftRoot `
+  --path (Join-Path $job 'source.mp4') --title Source
+.\jianying.ps1 lyra apply --workspace $workspace --draft-dir $draft --ref $ref `
+  --selection-file (Join-Path $job 'edit.selection')
+.\jianying.ps1 lyra sync --workspace $workspace --draft-root $draftRoot --ref $ref
+.\jianying.ps1 export-draft --draft-dir $draft --out (Join-Path $job 'render')
 ```
 
 `run_lyra()` 是唯一入口：它按官方沙箱规则声明只读/读写路径后，在官方 worker 中
@@ -54,9 +73,13 @@ python engine\draftediting_runtime.py apply --workspace C:\Temp\jy-ws `
 `work/draftediting-traces/`，同时保留 worker 的逐步进度（官方 bridge 是同步阻塞
 调用，卡住时进度文件是唯一证据）。
 
+官方 `--dir` 指向草稿的父目录，工程名由 `local://N` 解析；包装入口会核对 `--draft-dir`
+与该名称一致。独立任务工程无需先登记到剪映首页。修改已有片段前使用完整 `sync` 建立目标基线；
+`--current-only` 用于保留目标 XML 的回读，不替代下一轮编辑基线。
+
 ## 实测硬约束
 
-以下约束都来自本机 11.5.0.14471 的真实失败与修复，不是推测：
+以下约束来自 11.5.0.14471 历史验证和 11.4.7.14462 正式入口测试：
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
@@ -64,7 +87,7 @@ python engine\draftediting_runtime.py apply --workspace C:\Temp\jy-ws `
 | lyra-cli 崩溃 `0xC0000005`，日志里路径显示为乱码 | **沙箱策略无法处理非 ASCII 路径**（本仓库位于中文目录） | 工作区、草稿目录、Selection 文件全部使用纯 ASCII 路径 |
 | `workspace path is invalid (not a directory or already non-empty)` | `init` 只接受空目录或不存在的路径 | 换新工作区，或先清空 |
 | `invalid --ref, expected local://<name> or cloud://<name>` | `--ref` 是引用而不是目录路径 | 用 `local://<名称>` 配合 `--draft-root` |
-| `segment not found: <id>`，草稿未被写入 | **草稿必须在剪映草稿根下**；放在临时目录时 apply 会当作空草稿 | 把草稿副本放进 `com.lveditor.draft` 下 |
+| `segment not found: <id>`，草稿未被写入 | `--dir` 错传工程目录，或引用父根与同步基线不一致 | `--dir` 使用父目录、`local://N` 使用工程名称，修改前完整 `sync`；已验证外部任务工程 |
 | `expression must end with draft.apply()` | CLI 直连模式要求显式收尾 | Selection 末尾加 `draft.apply();` |
 | `XMLDRAFT_ATTRIBUTE_OWNER_INVALID: font_ref` | `font_ref` 的所有者是 `text|sub|slot|style|text_style`，不是 `<subtitle>` | 迁移到 `<sub>` |
 | `font_ref ... does not exist in the resource library` | `font_ref` 必须是资源库引用，而 `blueprint resource --import` 不支持字体 | 移除字体引用（回退默认字体），见 `tools/normalize_canonical_xml.py --mode drop` |
@@ -98,10 +121,10 @@ python engine\draftediting_runtime.py apply --workspace C:\Temp\jy-ws `
 
 ## 已知限制
 
-- **apply 只写 `Timelines/<id>/draft_content.json`。** 草稿根目录的 `draft_content.json`
-  与 `template-2.tmp` 不会更新，而渲染读取时优先取根文件，因此必须显式同步镜像，
-  否则会出现"草稿改了、成片没变"的假象。见
-  [无头端到端流水线](HEADLESS-PIPELINE.md) 的镜像同步一节。
+- **不同工程的活动时间线位置不同。** 11.4.7 官方新建外部工程只包含根目录
+  `draft_content.json`，没有 `Timelines` 目录；历史 11.5 工程的 apply 则可能只更新
+  `Timelines/<id>/draft_content.json`。正常 `export-draft` 根据工程声明解析主时间线后复制导出，
+  不为导出改写源工程镜像。旧歌词流水线的镜像处理见 [无头端到端流水线](HEADLESS-PIPELINE.md)。
 - **模板多输入槽位的文本分发不完整。** 官方转换器把同一宿主上的多个 `<sub>` 合并为一条
   `draft edit --update "text=1;target=A|B|C"`，实测结果是把整串 `A|B|C` 写入模板共享的
   text material，且不重分配 `text_info_resources[].word_index`，于是每个输入框都显示整串。
@@ -122,6 +145,22 @@ python engine\draftediting_runtime.py apply --workspace C:\Temp\jy-ws `
 - 官方资源检索（`--search`）需要联网与账号权益，本模块只保留命令，不代做授权。
 
 ## 实测记录
+
+### 11.4.7.14462 正常入口
+
+通过 `jianying.ps1` 完成独立任务的 `init → create → resource-import → sync → apply → sync`：
+
+- 新建外部工程并导入本地合成 MP4，所有路径保留在任务内。
+- 两轮官方 apply 分别执行 `4/4` 条命令，随后官方 canonical 回读确认视频时长 3000 ms、
+  音量 25，以及普通文字 `Normal CLI 11.4.7 passed`。
+- `jianying.ps1 export-draft` 使用上述真实编辑后的已保存工程，调用本机 `ExportService` 生成
+  1920×1080、30 fps、90 帧、3.000 秒 H.264/AAC MP4，完整解码和源文件未变检查通过。
+- 未使用实验 monkeypatch、开发信任开关、父进程伪造或白名单关闭；正式入口绑定精确版本和 DLL 哈希。
+
+该验证覆盖基础视频、源音频和普通文字，不代表复杂模板、在线资源或全部官方命令逐项验收。
+旧 `native_edit` 副本编辑流程与官方 Selection 链是不同入口，前者在 Windows 仍未验收。
+
+### 11.5.0.14471 历史记录
 
 `init → sync → apply` 已在剪映 11.5.0.14471 上完整跑通：
 

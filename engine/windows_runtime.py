@@ -1,4 +1,4 @@
-"""Windows 剪映 11.5 本地运行时适配。"""
+"""精确审核构建的 Windows 剪映本地运行时适配。"""
 from __future__ import annotations
 
 import hashlib
@@ -15,12 +15,22 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 import msvcrt
 
+from local_config import configure_environment, load_config, draft_locations
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BRIDGE = PROJECT_ROOT / "bridge"
-DRAFT_ROOT = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local")) / "JianyingPro/User Data/Projects/com.lveditor.draft"
+DRAFT_ROOT, DRAFT_INDEX_PATH, DRAFT_ROOT_SOURCE = draft_locations()
+
+
+def draft_index_path(root=None):
+    # An explicit fixture/root with its own index retains the existing contract.
+    root = DRAFT_ROOT if root is None else Path(root)
+    local = root / 'root_meta_info.json'
+    return local if local.is_file() else DRAFT_INDEX_PATH
 TIMELINE_FILE = "draft_content.json"
 PROFILE_PREFIX = "jy14-headless-windows-"
 WINDOWS_PROFILES = {
+    "11.4.7.14462": "fa89997a94e96cf97c8ee436a56ab028ea5f87731214696ba43ff74c0fdc0fa0",
     "11.5.0.14471": "37cadef37daff82e2ecdcd65080b9cbd7f6f9436f5e56c1ffb90c52c408eb7fb",
 }
 PUBLISHER = "深圳市脸萌科技有限公司"
@@ -55,6 +65,9 @@ def _install_candidates():
     if explicit:
         yield Path(explicit)
         return
+    configured = load_config().get("jianying_install_dir")
+    if configured:
+        yield Path(configured)
     apps = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local")) / "JianyingPro/Apps"
     if not apps.is_dir():
         return
@@ -62,29 +75,78 @@ def _install_candidates():
     yield from sorted(folders, key=lambda p: tuple(int(x) for x in p.name.split(".") if x.isdigit()), reverse=True)
 
 
+def _executable_version(path):
+    """Read the executable's fixed PE file version without loading the editor."""
+    import ctypes
+    from ctypes import wintypes
+
+    class FixedFileInfo(ctypes.Structure):
+        _fields_ = [(name, wintypes.DWORD) for name in (
+            "signature", "structure_version", "file_version_ms", "file_version_ls",
+            "product_version_ms", "product_version_ls", "flags_mask", "flags", "os",
+            "file_type", "file_subtype", "file_date_ms", "file_date_ls")]
+
+    version = ctypes.WinDLL("version.dll", use_last_error=True)
+    version.GetFileVersionInfoSizeW.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(wintypes.DWORD)]
+    version.GetFileVersionInfoSizeW.restype = wintypes.DWORD
+    version.GetFileVersionInfoW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD,
+                                           wintypes.DWORD, ctypes.c_void_p]
+    version.GetFileVersionInfoW.restype = wintypes.BOOL
+    version.VerQueryValueW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR,
+                                      ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(wintypes.UINT)]
+    version.VerQueryValueW.restype = wintypes.BOOL
+    ignored = wintypes.DWORD()
+    length = version.GetFileVersionInfoSizeW(str(path), ctypes.byref(ignored))
+    if not length:
+        raise ValueError("剪映可执行文件缺少 PE 文件版本资源")
+    buffer = ctypes.create_string_buffer(length)
+    if not version.GetFileVersionInfoW(str(path), 0, length, buffer):
+        raise ValueError("无法读取剪映 PE 文件版本资源")
+    pointer, size = ctypes.c_void_p(), wintypes.UINT()
+    if (not version.VerQueryValueW(buffer, "\\", ctypes.byref(pointer), ctypes.byref(size))
+            or size.value < ctypes.sizeof(FixedFileInfo) or not pointer.value):
+        raise ValueError("剪映 PE 文件版本资源无效")
+    info = ctypes.cast(pointer, ctypes.POINTER(FixedFileInfo)).contents
+    if info.signature != 0xFEEF04BD:
+        raise ValueError("剪映 PE 文件版本签名无效")
+    return ".".join(str(value) for value in (
+        info.file_version_ms >> 16, info.file_version_ms & 0xFFFF,
+        info.file_version_ls >> 16, info.file_version_ls & 0xFFFF))
+
+
 def discover_installation():
     for folder in _install_candidates():
         folder = folder.resolve()
         dll, executable = folder / "videoeditor.dll", folder / "JianyingPro.exe"
         if dll.is_file() and executable.is_file() and folder.name in WINDOWS_PROFILES:
+            try:
+                build = _executable_version(executable)
+            except (OSError, ValueError):
+                continue
+            if build != folder.name:
+                continue
             actual = digest(dll)
-            if actual == WINDOWS_PROFILES[folder.name]:
-                return folder, folder.name, actual
-    raise ValueError("未找到已审核的 Windows 剪映 11.5.0.14471；可用 JIANYING_INSTALL_DIR 指定版本目录")
+            if actual == WINDOWS_PROFILES[build]:
+                return folder, build, actual
+    raise ValueError("未找到已审核的 Windows 剪映构建（" + "、".join(WINDOWS_PROFILES)
+                     + "）；目录名、EXE 文件版本与 DLL 指纹必须一致。可配置 jianying_install_dir"
+                     + " 或用 JIANYING_INSTALL_DIR 指定版本目录")
 
 
 def doctor():
     if sys.platform != "win32" or sys.maxsize <= 2**32:
         raise ValueError("Windows 运行时需要 64 位 Windows 和 64 位 Python")
+    configure_environment()
     install, build, fingerprint = discover_installation()
-    if not DRAFT_ROOT.is_dir() or not (DRAFT_ROOT / "root_meta_info.json").is_file():
-        raise ValueError("剪映默认本地草稿目录尚未初始化")
+    if not DRAFT_ROOT.is_dir() or not draft_index_path().is_file():
+        raise ValueError("剪映草稿目录或首页索引尚未初始化；检查 draft_root / draft_index_path")
     for tool in ("ffmpeg", "ffprobe"):
         if not shutil.which(tool):
             raise ValueError(tool + " 未安装或不在 PATH 中")
     return {"status": "ok", "platform": "windows", "architecture": "x64",
-            "app_version": "11.5.0", "app_build": build,
+            "app_version": ".".join(build.split(".")[:3]), "app_build": build,
             "install_dir": str(install), "draft_root": str(DRAFT_ROOT),
+            "draft_index_path": str(draft_index_path()), "draft_root_source": DRAFT_ROOT_SOURCE,
             "libvideoeditor_sha256": fingerprint,
             "runtime_profile": PROFILE_PREFIX + build,
             "runtime_hashes_verified": True, "network_called": False,
@@ -196,9 +258,10 @@ def _parse_strict_json(payload, label):
 
 
 def _snapshot_file(path, label, max_bytes=256 * 1024 * 1024):
-    path = Path(path).resolve(strict=True)
+    path = Path(path)
     if path.is_symlink() or not path.is_file():
         raise ApplyError(label + " 必须是普通文件")
+    path = path.resolve(strict=True)
     before, parent = path.stat(), path.parent.stat()
     if max_bytes is not None and before.st_size > max_bytes:
         raise ApplyError(label + " 超过安全大小限制")
@@ -245,10 +308,10 @@ def _ensure_editor_closed(confirm_editor_closed):
     if confirm_editor_closed is not True:
         raise ApplyError("需要明确确认剪映已关闭")
     result = subprocess.run(["tasklist.exe", "/FI", "IMAGENAME eq JianyingPro.exe", "/FO", "CSV", "/NH"],
-                            capture_output=True, text=True, timeout=15)
+                            capture_output=True, timeout=15)
     if result.returncode:
         raise ApplyError("无法确认剪映是否已关闭")
-    if "JianyingPro.exe" in result.stdout:
+    if b"jianyingpro.exe" in result.stdout.lower():
         raise ApplyError("剪映主进程仍在运行")
     return {"confirmed_by_user": True, "main_process_closed": True}
 

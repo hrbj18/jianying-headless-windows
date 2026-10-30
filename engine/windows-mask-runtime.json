@@ -1,0 +1,317 @@
+{
+  "schema": "jy-windows-mask-runtime/v1",
+  "runtime_profile": "jy14-headless-windows-11.4.7.14462",
+  "app_build": "11.4.7.14462",
+  "builtin_relative": "Resources/lumi_js_resources_video",
+  "builtin_files": {
+    "config.json": {
+      "sha256": "2433d107238b12e962682982e18142ef9db47c1eb1ca6dc26062becafaedb1f1",
+      "size": 833
+    },
+    "js/video/video.js": {
+      "sha256": "fa6181802fbb3754e9c3d6ebecd73b45dd3d4b5c77843d0ab905ca73723bf44b",
+      "size": 30858
+    },
+    "resources/feature-mask/algorithmConfig.json": {
+      "sha256": "8ae24567a8eaa018a3117c5fcd7fb46342e63dde8cd2119e02514b6823d38963",
+      "size": 412
+    },
+    "resources/feature-mask/AmazingFeature_mask/content.json": {
+      "sha256": "6d0f3475b669bc32c9d6c313c13897fa6b1c43cce514ff00f639ab5f44d25eba",
+      "size": 153
+    },
+    "resources/feature-mask/AmazingFeature_mask/ImageBusinessSlider.json": {
+      "sha256": "b408c5a3949a0a77bacbc934e82ced44e25db3491c54a891be064158592810cf",
+      "size": 35
+    },
+    "resources/feature-mask/AmazingFeature_mask/js-meta.json": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "size": 2
+    },
+    "resources/feature-mask/AmazingFeature_mask/lua/ImageBusinessSlider.lua": {
+      "sha256": "c85339ba94ec16c19cc47d1ca31d755afec392c81723b122d1ae2eea53ffa1bf",
+      "size": 777
+    },
+    "resources/feature-mask/AmazingFeature_mask/lua/SeekModeScript.lua": {
+      "sha256": "953746d8a6915027d9c222524d50f01fb4832df47d472aaf6167ca11f20aafcd",
+      "size": 1816
+    },
+    "resources/feature-mask/AmazingFeature_mask/lua-meta.json": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "size": 2
+    },
+    "resources/feature-mask/AmazingFeature_mask/LuaRTTI.MarkGen.lua": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "resources/feature-mask/AmazingFeature_mask/main.scene": {
+      "sha256": "ef7d43f01d723f16f3850bc3fe29b8280614bf0c3d431c1ce3044050c95e9b8a",
+      "size": 4584
+    },
+    "resources/feature-mask/AmazingFeature_mask/material/blend.material": {
+      "sha256": "21120d67a9daaae14cd459ba69483a609b85c868bd1e9fd939c7e1505669500c",
+      "size": 795
+    },
+    "resources/feature-mask/AmazingFeature_mask/mesh/Quad.mesh": {
+      "sha256": "a2b0e2c65a2e1c3c9713e2fc0e7f9d5738b91bd4e2deaa4dae2988fb32fed6af",
+      "size": 1279
+    },
+    "resources/feature-mask/AmazingFeature_mask/prefabs/Camera_blit.prefab": {
+      "sha256": "336c91a3ad06484ba4e079f69fb22c5148a8ba9ba50e898a0ea304601b8da7c9",
+      "size": 1018
+    },
+    "resources/feature-mask/AmazingFeature_mask/rt/blitRT.rt": {
+      "sha256": "a63500b63e6c1404940514b758a38ebf267bbd06959fc72a644c3d651e039b23",
+      "size": 586
+    },
+    "resources/feature-mask/AmazingFeature_mask/rt/maskRT.rt": {
+      "sha256": "8d0d8a4f81cdc84563565b8baf46778404365033b1ef28338f54c2a1c67b3243",
+      "size": 586
+    },
+    "resources/feature-mask/AmazingFeature_mask/rt/outputTex.rt": {
+      "sha256": "3d37eba2ba37bb8cf029c2e3fecaefec6e01c1ddbb17b1e6833597a30b998616",
+      "size": 530
+    },
+    "resources/feature-mask/AmazingFeature_mask/scene.config": {
+      "sha256": "b704f62770775a071dc0fdb03ae5d0f674f939f605b3ae83b3c8e42eca2619f9",
+      "size": 344
+    },
+    "resources/feature-mask/AmazingFeature_mask/sticker.config": {
+      "sha256": "41a18e6942c07d85bc8dd19973ce55a8d200b8c7eae8f41901fa3b73ccdfb628",
+      "size": 274
+    },
+    "resources/feature-mask/AmazingFeature_mask/xshader/blend.frag": {
+      "sha256": "8a24cbb9fbbf9fad88b836b9e213c89c7312c359643218f3a4a681845e67af4d",
+      "size": 947
+    },
+    "resources/feature-mask/AmazingFeature_mask/xshader/blend.vert": {
+      "sha256": "fb3e9e7a966147cc5cb48b1a087931bfbdea744a0d0e0def0f07070ba48a73cc",
+      "size": 245
+    },
+    "resources/feature-mask/AmazingFeature_mask/xshader/blend.xshader": {
+      "sha256": "71f23c37a11533bf705d6ea2dde166b8c1c7992141923b1a78bd18c4aa58af30",
+      "size": 1329
+    },
+    "resources/feature-mask/config.json": {
+      "sha256": "ac8685d7128b1b60d1368f2623d0de48a1ec3df08c371ecc5f210c679a68de1d",
+      "size": 307
+    },
+    "resources/lumi-hub/config.json": {
+      "sha256": "5e57049062d13f77b9c68520164888a45a13c3c8ccd9bec96449eb3d31f914ba",
+      "size": 64
+    },
+    "resources/lumi-hub/content.json": {
+      "sha256": "c03ed58cc8fca2f4910fe65a98e4b6c209d7285e79b2068d40c3b7da30298966",
+      "size": 228
+    },
+    "resources/lumi-hub/effects/LumiHub/LumiExtra.frag": {
+      "sha256": "f5ce442c91816b0672f108d392357df34ac744da80704f8f2680aae1c53d797c",
+      "size": 144
+    },
+    "resources/lumi-hub/effects/LumiHub/LumiExtra.material": {
+      "sha256": "af5d16647e261cbc68adf886e54af37cf218d5979faf29a07caf05492fdba5dd",
+      "size": 639
+    },
+    "resources/lumi-hub/effects/LumiHub/LumiExtra.mesh": {
+      "sha256": "d41b120719ec1d210e48efc7c3b373b457895eb632061fc1b1e00d50888b3532",
+      "size": 1255
+    },
+    "resources/lumi-hub/effects/LumiHub/LumiExtra.vert": {
+      "sha256": "f9eefc2b4aa4ee0a5030c77917c0a3fd2acbcbafc332c00e7569d3ad90de22f1",
+      "size": 297
+    },
+    "resources/lumi-hub/effects/LumiHub/LumiExtra.xshader": {
+      "sha256": "7d5e1280b567fe83c6e2b389159331c6eeee134dbb0f9f665ba6a495b67d2fef",
+      "size": 1731
+    },
+    "resources/lumi-hub/lua/LumiFamily/LumiHub.lua": {
+      "sha256": "73d560460a574387540f1e1f6b49f99cf1297b5b6014bf643c4722e1713ef17d",
+      "size": 41321
+    },
+    "resources/lumi-hub/lua/LumiFamily/LumiObjectExtension.lua": {
+      "sha256": "729ab739a7ad74aec41a4290903b10b9cc96d50cc317aa03d80ed560b57f49e7",
+      "size": 16542
+    },
+    "resources/lumi-hub/lua/LumiFamily/LumiUtils.lua": {
+      "sha256": "aecec8bf9e1b479de98a41816984f5c6516028d6dafa17379daf5d4e21296d0e",
+      "size": 8733
+    },
+    "resources/lumi-hub/prefabs/LumiRoot.prefab": {
+      "sha256": "c871a2fab271cbc0e2dd6b2141fb141c8353871abc4a6aeae25ea5ccefe1fe75",
+      "size": 700
+    },
+    "resources/stroke-shadow/algorithmConfig.json": {
+      "sha256": "8ae24567a8eaa018a3117c5fcd7fb46342e63dde8cd2119e02514b6823d38963",
+      "size": 412
+    },
+    "resources/stroke-shadow/AmazingFeature/content.json": {
+      "sha256": "28edbb087e8a308cc82c5dc1c1a65658c0ba0f6053d4921b0a2d4167828ca781",
+      "size": 152
+    },
+    "resources/stroke-shadow/AmazingFeature/ImageBusinessSlider.json": {
+      "sha256": "b408c5a3949a0a77bacbc934e82ced44e25db3491c54a891be064158592810cf",
+      "size": 35
+    },
+    "resources/stroke-shadow/AmazingFeature/js-meta.json": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "size": 2
+    },
+    "resources/stroke-shadow/AmazingFeature/lua/ImageBusinessSlider.lua": {
+      "sha256": "c85339ba94ec16c19cc47d1ca31d755afec392c81723b122d1ae2eea53ffa1bf",
+      "size": 777
+    },
+    "resources/stroke-shadow/AmazingFeature/lua/SeekModeScript.lua": {
+      "sha256": "b52b216caba282f73735b8b8e6964016008221d20b199ee301fdc088571c6b75",
+      "size": 1697
+    },
+    "resources/stroke-shadow/AmazingFeature/lua-meta.json": {
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "size": 2
+    },
+    "resources/stroke-shadow/AmazingFeature/LuaRTTI.MarkGen.lua": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "resources/stroke-shadow/AmazingFeature/main.scene": {
+      "sha256": "fda466bc9b3e64f1b0cba25078cd704d974756c5592a70e8b8294a50e9704db6",
+      "size": 1801
+    },
+    "resources/stroke-shadow/AmazingFeature/mesh/Quad.mesh": {
+      "sha256": "a2b0e2c65a2e1c3c9713e2fc0e7f9d5738b91bd4e2deaa4dae2988fb32fed6af",
+      "size": 1279
+    },
+    "resources/stroke-shadow/AmazingFeature/rt/outputTex.rt": {
+      "sha256": "3d37eba2ba37bb8cf029c2e3fecaefec6e01c1ddbb17b1e6833597a30b998616",
+      "size": 530
+    },
+    "resources/stroke-shadow/AmazingFeature/scene.config": {
+      "sha256": "b704f62770775a071dc0fdb03ae5d0f674f939f605b3ae83b3c8e42eca2619f9",
+      "size": 344
+    },
+    "resources/stroke-shadow/AmazingFeature/sticker.config": {
+      "sha256": "86790ec1e6a388c6c34817b905b93c4a27888f920936bb65a201754767cd67e4",
+      "size": 230
+    },
+    "resources/stroke-shadow/config.json": {
+      "sha256": "f898efbc22cbde43b3249138ccb923c10ef827069d1403fcc6ccffebe73a799c",
+      "size": 302
+    }
+  },
+  "builtin_tree_sha256": "cd9065145b7a0371fd32b007217345ac94abdfa3e8f38a4e218a30b278dc67f8",
+  "mask_circle": {
+    "resource_id": "7356934080102928946",
+    "resource_type": "circle",
+    "type": "mask",
+    "category": "video",
+    "category_id": "jichu",
+    "name": "REA-circle",
+    "files": {
+      "amazingfeature/content.json": {
+        "sha256": "384dec6b3a14c089572e7afade9997a17c450f8923c76a278c0e2a36222bf6a3",
+        "size": 215
+      },
+      "amazingfeature/effects/lumi_circle_mask/lua/ImageBusinessSlider.lua": {
+        "sha256": "cf2de7028500c626d856db95018799e01e56da610b288caa5d6f6ea838f90427",
+        "size": 777
+      },
+      "amazingfeature/effects/lumi_circle_mask/lua/Process.lua": {
+        "sha256": "c7d7864f36882293db78e888904662b177de4d1729fc2f44e3e4bdf3338fd52a",
+        "size": 3687
+      },
+      "amazingfeature/effects/lumi_circle_mask/material/picture.material": {
+        "sha256": "b59bb0542054e587e9da44b88135c8119c05d24d7d3dba9054e8edf05866e86a",
+        "size": 743
+      },
+      "amazingfeature/effects/lumi_circle_mask/mesh/SP_Quad.mesh": {
+        "sha256": "af2f466e70de7f6cb91d329d1b4aa79d076e2354298b6cd62bf50fff8fb71d1e",
+        "size": 1019
+      },
+      "amazingfeature/effects/lumi_circle_mask/rt/NewScreenRT.rt": {
+        "sha256": "39b1f0bc99a2f45c35c4f6055e0a996669f11fe73e9821adc1a4818eb6fa68f3",
+        "size": 569
+      },
+      "amazingfeature/effects/lumi_circle_mask/xshader/picture.frag": {
+        "sha256": "e22a47fdcf83c5606f7aa807be00bfc9ed61a5e1fb63ebaaca5474d3b553a0c5",
+        "size": 864
+      },
+      "amazingfeature/effects/lumi_circle_mask/xshader/picture.vert": {
+        "sha256": "7eacb261d060fe51c7b19617028e031cb0ad67ca37e25e3f3afe9d37e1decfe9",
+        "size": 483
+      },
+      "amazingfeature/effects/lumi_circle_mask/xshader/picture.xshader": {
+        "sha256": "96173873ac00eea48b76c02d31f3152ec10808a07c8b38c794a37753d128f6cc",
+        "size": 1330
+      },
+      "amazingfeature/ImageBusinessSlider.json": {
+        "sha256": "edb3dc39e93b7782fcccb4693e87809a39a3f7132f58a94d29db9d77d0e78433",
+        "size": 33
+      },
+      "amazingfeature/js-meta.json": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "size": 2
+      },
+      "amazingfeature/lua/ImageBusinessSlider.lua": {
+        "sha256": "cf2de7028500c626d856db95018799e01e56da610b288caa5d6f6ea838f90427",
+        "size": 777
+      },
+      "amazingfeature/lua/LumiFamily/LumiManager.lua": {
+        "sha256": "59651651476e6cb435452ede1ac4e9e2a7003ac7832692df77c7de2abc72eb75",
+        "size": 4898
+      },
+      "amazingfeature/lua/LumiFamily/LumiObjectExtension.lua": {
+        "sha256": "cd4295455c9c8ad7c5c1d31e8c128b8d581ceaad2227315e5c9b8c5f01882423",
+        "size": 14607
+      },
+      "amazingfeature/lua/LumiFamily/LumiParamsSetter.lua": {
+        "sha256": "f40b8f07255e9d1c62981ea943e1e5a1fe1ef54a587c5d92e8a3f0980949a2e3",
+        "size": 1204
+      },
+      "amazingfeature/lua-meta.json": {
+        "sha256": "1422e104e41c420071cd894f27615539e62b9019b8c7ed86374a9df442ac6e8a",
+        "size": 3043
+      },
+      "amazingfeature/LuaRTTI.MarkGen.lua": {
+        "sha256": "92c21dcd89568286f774729df77109e6cb409920e9628f7ee1aff8fd804f72c3",
+        "size": 198
+      },
+      "amazingfeature/main.scene": {
+        "sha256": "9a5d82743656f58937ec54b7450ec9a49f50ae5c6ce0b70a64f79efe8139d96c",
+        "size": 3503
+      },
+      "amazingfeature/prefabs/circleMaskProcess.prefab": {
+        "sha256": "e37fc63a118ad952a849310619772bc715a845b2803825bced4105257ffad6fc",
+        "size": 2355
+      },
+      "amazingfeature/rt/outputTex.rt": {
+        "sha256": "aba30394e1cb65b781559f1f1de7fdcdb71740224e5224b7631ee15cea88c400",
+        "size": 510
+      },
+      "amazingfeature/scene.config": {
+        "sha256": "10e224fdb524112c2aac028710ee79a83db0bc59bddb9723a3477ccbb549e265",
+        "size": 320
+      },
+      "amazingfeature/sticker.config": {
+        "sha256": "c2e398fb02d37ea98d2dffe986c47975e76b3fff8d7df2085986b10eb07b48d9",
+        "size": 300
+      },
+      "config.json": {
+        "sha256": "5fe961c50ad139dc256dc2dbcedcc08bd27a5ba22d960e4af9cc46bb1721ade8",
+        "size": 245
+      }
+    },
+    "tree_sha256": "8c76a50caf63c961dd2dad3f3b88a7d4f611ab018f5cd2132ba5af59eb92454f"
+  },
+  "abi_evidence": {
+    "source": "videoeditor_addon.node",
+    "source_sha256": "d9997bc0421a9da9ecafba4835bb8b4c1363de7a8c50e46be81b081766300be9",
+    "adapter_lumi_video_string_offset": "0x9b8",
+    "constructor": "FUN_18023f3c0",
+    "evidence_id": "ev_e81b4958d8cfb2049b6101f21c7e3e96a7d28784f3106fc0369ea6852d6a8ec8",
+    "ownership_evidence_id": "ev_8f876b0b849d57fc6df2b8c7a9d5cd62106369fb14d8629721c199661127766c"
+  },
+  "limits": [
+    "Only the exact reviewed 11.4.7.14462 is admitted.",
+    "Only mask/circle protocol repair is admitted.",
+    "This records local acquired package identity, not redistribution rights."
+  ]
+}

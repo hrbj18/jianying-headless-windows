@@ -1,6 +1,7 @@
 # Runtime and audit artifacts remain local.
 /work/
 /outputs/
+/.local/
 .DS_Store
 __pycache__/
 *.py[cod]
@@ -10,6 +11,7 @@ venv/
 .env
 .env.*
 !.env.example
+/local-settings.json
 
 # Rebuilt locally from our bridge source; not a bundled official engine.
 /bridge/jy14_codec_hardened_11_4
@@ -21,6 +23,7 @@ venv/
 *.dylib
 *.so
 *.dll
+!/bridge/live-editor/live-qt-pipe-v02.dll
 *.exe
 *.app/
 *.mp4

@@ -91,6 +91,21 @@ Default builds and existing snapshot verification do not require the parser.
 The project license does not replace the dependency's MIT license or grant rights
 to font files supplied by users.
 
+## Material-analysis reference and optional dependencies
+
+The Windows material-analysis workflow follows the user's local
+`haike-workflow-2/Haike_video` ASR durability and overview/contact-sheet design.
+Reference modules include `backlot/bailian_asr.py`, `lib/bailian_speech.py`,
+`backlot/material_overview.py` and `backlot/media_index.py`. That application,
+its credentials and media are not distributed here. This is a separately scoped
+adapter into the existing native Jianying workflow, with explicit agent review.
+
+[requirements-analysis.txt](requirements-analysis.txt) lists separately installed
+requests, python-dotenv and Pillow versions. Their own package licenses continue
+to apply. Bailian/Alibaba Cloud is an external, account-scoped service; audio is
+uploaded only when that workflow is selected with the user's authorization.
+Keys, signed cloud URLs and upload policies are not distributable project assets.
+
 ## Python, macOS and Xcode toolchain
 
 Python and Apple's developer tools are external prerequisites, not bundled

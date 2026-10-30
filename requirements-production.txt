@@ -1,0 +1,3 @@
+-r requirements-analysis.txt
+-r requirements-fonts.txt
+numpy==2.5.4

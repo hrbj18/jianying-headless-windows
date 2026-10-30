@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Create new Jianying 11.4 drafts from local media, without UI preparation.
 
-Media is copied into the new draft's Resources directory. Existing drafts and
+Media is materialized into the new draft's Resources directory. On Windows,
+immutable media shares a verified read-only, same-volume store object. Existing drafts and
 global bookmark stores are never edited. Native UI acceptance is a separate
 step. All times in the plan are integer microseconds.
 """
@@ -28,7 +29,9 @@ import native_resources as resources
 import native_effects as effects
 import native_visual_effects as visual_effects
 import native_fonts as fonts
-from runtime_profiles import validate_timeline_schema
+import native_av_plan as av_plan
+import media_store
+from runtime_profiles import validate_timeline_schema, WINDOWS_1147_PROFILE
 
 HERE = Path(__file__).resolve().parent
 BLUEPRINT_SHA = '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9'
@@ -182,13 +185,18 @@ def validate_plan(plan):
             allowed = {'start_us', 'duration_us', 'source', 'source_start_us', 'source_duration_us', 'speed', 'volume'}
             allowed.add('keyframes')
             if kind == 'video':
-                allowed |= {'scale', 'x', 'y', 'rotation', 'opacity', 'mask', 'transition_out'}
+                allowed |= {'scale', 'x', 'y', 'rotation', 'opacity', 'mask', 'transition_out', 'speed_curve','grade'}
+            elif kind=='audio':
+                allowed.add('audio_processing')
             elif kind == 'text':
                 allowed = {'start_us', 'duration_us', 'text', 'size', 'x', 'y', 'color', 'border_color', 'border_width',
                            'keyframes', 'opacity', 'text_effect', 'font_path'}
             elif kind in {'filter', 'effect'}:
                 allowed = {'start_us', 'duration_us', 'name', 'strength' if kind == 'filter' else 'params'}
             keys(seg, allowed, 'Segment')
+            import native_speed_curves
+            native_speed_curves.validate_spec(seg,kind)
+            av_plan.validate_spec(seg,kind)
             start = integer(seg.get('start_us', 0), 'start_us')
             span = integer(seg.get('duration_us'), 'duration_us', 1)
             motion.validate(seg, kind)
@@ -260,14 +268,15 @@ def text_material(material, seg):
                     font_size=size, text_color=color, border_color=border, border_width=width)
 
 
-def timeline_for(plan, assets, target, tid, bp, font_assets=None):
+def timeline_for(plan, assets, target, tid, bp, font_assets=None, runtime=None):
     font_assets = fonts.collect_plan(plan) if font_assets is None else font_assets
     doc = deepcopy(bp['timeline'])
     doc.update(id=tid, tracks=[], materials={}, duration=0, color_space=0,
                canvas_config={k: plan['canvas'][k] for k in ('width', 'height')})
     if nd.IS_WINDOWS:
+        runtime = nd.doctor() if runtime is None else runtime
         platform_info = {'os': 'windows', 'os_version': platform.version(), 'app_id': 3704,
-                         'app_version': '11.5.0', 'app_source': 'lv'}
+                         'app_version': runtime['app_version'], 'app_source': 'lv'}
         doc['platform'] = deepcopy(platform_info)
         doc['last_modified_platform'] = deepcopy(platform_info)
     doc['fps'] = float(plan['canvas']['fps'])
@@ -292,6 +301,20 @@ def timeline_for(plan, assets, target, tid, bp, font_assets=None):
             ids = {sample['segment']['id']: identifier()}
             ids.update({mat['id']: identifier() for _, mat in sample['materials']})
             segment = remap(deepcopy(sample['segment']), ids)
+            if nd.IS_WINDOWS and kind == 'text':
+                # The captured macOS text sample binds an empty sticker-animation
+                # placeholder. Windows ProjectClient::init dereferences that
+                # binding and crashes; native Lyra plain text has no such ref.
+                empty_animations = {ids[mat['id']] for bucket, mat in sample['materials']
+                                    if bucket == 'material_animations' and
+                                    mat.get('type') == 'sticker_animation' and
+                                    not mat.get('animations')}
+                refs = [ref for ref in segment.get('extra_material_refs', [])
+                        if ref not in empty_animations]
+                if refs:
+                    segment['extra_material_refs'] = refs
+                else:
+                    segment.pop('extra_material_refs', None)
             segment['target_timerange'] = {'start': spec.get('start_us', 0), 'duration': spec['duration_us']}
             segment['track_render_index'] = ti
             if kind == 'text':
@@ -314,6 +337,9 @@ def timeline_for(plan, assets, target, tid, bp, font_assets=None):
                 material = remap(deepcopy(original), ids)
                 if bucket == 'speeds':
                     material['speed'] = spec.get('speed', 1)
+                    if 'speed_curve' in spec:
+                        import native_speed_curves
+                        material.update(mode=1,curve_speed=native_speed_curves.from_spec(spec))
                 if bucket in {'videos', 'audios'}:
                     material.update(path=str(target / asset['relative']), duration=asset['duration_us'],
                                     local_material_id=asset['local_id'])
@@ -338,6 +364,7 @@ def timeline_for(plan, assets, target, tid, bp, font_assets=None):
             motion.apply(segment, doc['materials'], spec, kind, target)
             effects.apply(segment, doc['materials'], spec, target)
             visual_effects.apply_text(segment, doc['materials'], spec, target)
+            av_plan.apply(segment,doc['materials'],spec,kind,target)
             newtrack['segments'].append(segment)
             doc['duration'] = max(doc['duration'], spec.get('start_us', 0) + spec['duration_us'])
         doc['tracks'].append(newtrack)
@@ -369,7 +396,11 @@ def files_manifest(folder):
 def build(plan_path, out):
     runtime = nd.doctor()
     plan = read_json(plan_path)
+    av_plan.bind_lut_sources(plan)
     assets, duration, font_assets = validate_plan(plan)
+    if any(s.get('keyframes') and s.get('source_start_us', 0) for t in plan['tracks'] for s in t['segments']):
+        require(runtime['runtime_profile'] == WINDOWS_1147_PROFILE,
+                'Trimmed-source keyframe clock is reviewed only for Windows 11.4.7.14462')
     bp = blueprint()
     target = nd.DRAFT_ROOT / plan['name']
     require(not target.exists(), 'Target already exists; choose a new draft name')
@@ -378,12 +409,16 @@ def build(plan_path, out):
     folder.mkdir(mode=0o700)
     now = time.time_ns() // 1000
     did, tid, pid = identifier(), identifier(), identifier()
+    media_materialization = []
     for asset in assets.values():
         asset['local_id'] = str(uuid.uuid4())
         # Content hash plus extension avoids arbitrary path components and name collisions.
         asset['relative'] = 'Resources/headless-media/' + asset['sha256'] + Path(asset['source']).suffix.lower()
         dest = folder / asset['relative']
-        if not dest.exists():
+        if nd.IS_WINDOWS:
+            media_materialization.append(media_store.materialize_immutable(
+                asset['source'], dest, asset['sha256']))
+        elif not dest.exists():
             dest.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
             with Path(asset['source']).open('rb') as src, dest.open('xb') as dst:
                 shutil.copyfileobj(src, dst, 1024 * 1024)
@@ -392,8 +427,9 @@ def build(plan_path, out):
             os.chmod(dest, 0o600)
         require(nd.digest(dest) == asset['sha256'] == nd.digest(asset['source']), 'Source changed while copying')
     native_resources = resources.prepare(plan, folder, runtime)
+    native_av_resources=av_plan.prepare(plan,folder,runtime,project_target=target)
     fonts.copy_assets(font_assets.values(), folder)
-    timeline, reg = timeline_for(plan, assets, target, tid, bp, font_assets)
+    timeline, reg = timeline_for(plan, assets, target, tid, bp, font_assets, runtime)
     metadata = deepcopy(bp['metadata'])
     metadata.update(draft_id=did, draft_name=target.name, draft_fold_path=str(target), draft_root_path=str(nd.DRAFT_ROOT),
                     tm_draft_create=now, tm_draft_modified=now, tm_duration=duration,
@@ -432,7 +468,10 @@ def build(plan_path, out):
     # Cover generation is local and creates only a JPEG, never an intermediate video.
     videos = [a for a in assets.values() if a['kind'] == 'video']
     if videos:
-        command = ['ffmpeg', '-v', 'error', '-n', '-i', str(folder / videos[0]['relative']),
+        first_video = next(t for t in plan['tracks'] if t['type'] == 'video')['segments'][0]
+        cover_seconds = first_video.get('source_start_us', 0) / MICROS
+        command = ['ffmpeg', '-v', 'error', '-n', '-ss', format(cover_seconds, '.6f'),
+                   '-i', str(folder / videos[0]['relative']),
                    '-frames:v', '1', '-vf', 'scale=320:-2', str(folder / 'draft_cover.jpg')]
     else:
         command = ['ffmpeg', '-v', 'error', '-n', '-f', 'lavfi', '-i', 'color=black:s=320x180',
@@ -444,15 +483,21 @@ def build(plan_path, out):
     h._encrypt_metadata_from_memory(nd.packed(metadata), folder / 'draft_meta_info.json')
     require(h._decrypt_metadata_in_memory(folder / 'draft_meta_info.json') == metadata, 'Metadata codec round-trip failed')
     write(out / 'plan.json', plan)
+    if nd.IS_WINDOWS:
+        write(out / 'media-materialization.json', {'schema': media_store.SCHEMA,
+              'contract': media_store.IMMUTABLE_CONTRACT, 'files': media_materialization})
     record = {'schema': 'jy14-headless-build/v1', 'name': target.name, 'target': str(target), 'draft_id': did,
               'timeline_id': tid, 'project_id': pid, 'created_us': now, 'duration_us': duration,
               'blueprint_sha256': BLUEPRINT_SHA, 'runtime_manifest': nd.MANIFEST_SHA,
               'runtime_profile': runtime['runtime_profile'], 'runtime': runtime,
               'assets': list(assets.values()), 'native_resources': native_resources,
+              'native_av_resources':native_av_resources,
               'font_assets': list(font_assets.values()),
               'transition_audit': effects.transition_audit(plan, assets),
               'plan_sha256': nd.digest(out / 'plan.json'),
-              'files': files_manifest(folder), 'media_copy_policy': 'draft-owned-resources',
+              'files': files_manifest(folder),
+              'media_copy_policy': ('draft-owned-read-only-cas-links' if nd.IS_WINDOWS else 'draft-owned-resources'),
+              'media_materialization': media_materialization,
               'ui_preparation_used': False, 'live_written': False, 'native_ui_acceptance': 'pending'}
     write(out / 'build.json', record)
     verify_build(out)
@@ -482,7 +527,7 @@ def verify_structure(timeline, metadata, plan, assets, target, allow_native_reso
     validate_timeline_schema(timeline, runtime_profile)
     require(all(timeline['canvas_config'][k] == plan['canvas'][k] for k in ('width', 'height')), 'Canvas changed')
     require(timeline.get('fps', 30) == plan['canvas']['fps'], 'Timeline frame rate changed')
-    require(metadata['draft_fold_path'] == str(target) and metadata['draft_name'] == target.name, 'Draft identity mismatch')
+    require(same_native_path(metadata['draft_fold_path'], target) and metadata['draft_name'] == target.name, 'Draft identity mismatch')
     require(len(timeline.get('tracks', [])) == len(plan['tracks']), 'Track count changed')
     index = {}
     for bucket, mats in timeline['materials'].items():
@@ -515,13 +560,16 @@ def verify_structure(timeline, metadata, plan, assets, target, allow_native_reso
             max_end = max(max_end, timerange.get('start', 0) + timerange['duration'])
             material = index[actual['material_id']][1]
             motion.verify(actual, index, spec, wanted['type'], tolerance)
+            import native_speed_curves
+            native_speed_curves.verify_segment(actual,index,spec,wanted['type'])
+            av_plan.verify(actual,index,spec,wanted['type'],target)
             native_resource_bindings.extend(effects.verify(actual, index, spec, tolerance, target,
                                                            native_media_path, allow_native_resource_cache))
             native_resource_bindings.extend(visual_effects.verify(actual, index, spec, wanted['type'], target,
                                                                   native_media_path, allow_native_resource_cache))
             if 'mask' in spec:
                 mask = next(index[r][1] for r in actual.get('extra_material_refs', []) if index[r][0] == 'common_mask')
-                native_resource_bindings.append(resources.verify_binding('mask/' + spec['mask']['shape'], mask['path'],
+                native_resource_bindings.append(resources.verify_binding(resources.mask_key(spec['mask']), mask['path'],
                     target, native_media_path, allow_native_cache=allow_native_resource_cache))
             animated = set(spec.get('keyframes', {}))
             if wanted['type'] in {'video', 'text'}:
@@ -601,6 +649,7 @@ def verify_build(out):
     if font_assets is not None:
         fonts.verify_assets(font_assets, timeline, target, out / 'draft')
     resources.verify_files(record.get('native_resources', []), out / 'draft', plan)
+    av_plan.verify_files(record.get('native_av_resources',[]),out/'draft',plan,project_target=Path(record['target']))
     return record
 
 
@@ -661,6 +710,49 @@ def copy_xattrs(source_attrs, destination, audit, source=None):
     return copied, changed
 
 
+def same_native_path(actual, expected):
+    """Compare native Windows paths without changing the stored index bytes."""
+    if not isinstance(actual, (str, Path)) or not str(actual):
+        return False
+    actual, expected = str(actual), str(expected)
+    if nd.IS_WINDOWS:
+        return os.path.normcase(os.path.normpath(actual)) == os.path.normcase(os.path.normpath(expected))
+    return actual == expected
+
+
+def copy_draft_dependencies(source, destination, record):
+    """Copy editable metadata; materialize immutable media through the volume pool."""
+    source = Path(source)
+    evidence = []
+
+    def copy_file(src, dst):
+        relative = Path(src).relative_to(source)
+        if len(relative.parts) >= 3 and relative.parts[0] == 'Resources' and relative.parts[1] in {
+                'headless-media', 'headless-edited-media', 'native-export-media'}:
+            from media_store import materialize_immutable
+            info = record['files'][str(relative)]
+            evidence.append(materialize_immutable(src, dst, info['sha256']))
+            return str(dst)
+        return shutil.copy2(src, dst)
+
+    shutil.copytree(source, destination, copy_function=copy_file)
+    return evidence
+
+
+def private_transaction_root():
+    """Keep failed incoming drafts outside every registered draft scan directory."""
+    from media_store import safe_path
+    folder = nd.DRAFT_ROOT.parent / '.headless-transactions'
+    safe_path(folder, exists=False)
+    folder.mkdir(exist_ok=True, mode=0o700)
+    resolved = safe_path(folder, directory=True)
+    active = safe_path(nd.DRAFT_ROOT, directory=True)
+    require(active != resolved and active not in resolved.parents,
+            'Transaction root must be outside the active draft directory')
+    require(resolved.stat().st_dev == active.stat().st_dev, 'Transaction root must be on the draft volume')
+    return resolved
+
+
 def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None):
     verify_build_fn = verify_build_fn or verify_build
     verify_live_fn = verify_live_fn or verify_live
@@ -678,18 +770,20 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
         require(target.is_dir() and files_manifest(target) == record['files'],
                 'Resume refused: target differs from the exact unpublished build')
     audit = nd.fresh_directory(audit)
-    lock, identity = h._acquire_directory_transaction_lock(nd.DRAFT_ROOT, 'headless draft root')
+    index_path = (nd._windows.draft_index_path(nd.DRAFT_ROOT) if nd.IS_WINDOWS
+                  else nd.DRAFT_ROOT / 'root_meta_info.json')
+    lock, identity = h._acquire_directory_transaction_lock(index_path.parent, 'headless home index')
     phase = 'locked'
     temporary = stage = None
     try:
-        root = h._snapshot_file(nd.DRAFT_ROOT / 'root_meta_info.json', 'home index')
+        root = h._snapshot_file(index_path, 'home index')
         original = h._parse_strict_json(root.content, 'home index')
-        require(original['root_path'] == str(nd.DRAFT_ROOT), 'Home index root path mismatch')
-        entries = [e for e in original['all_draft_store'] if e.get('draft_fold_path') == str(target)
+        require(same_native_path(original['root_path'], index_path.parent), 'Home index root path mismatch')
+        entries = [e for e in original['all_draft_store'] if same_native_path(e.get('draft_fold_path'), target)
                    or e.get('draft_id') == record['draft_id']]
         if entries:
             require(resume and len(entries) == 1 and entries[0].get('draft_id') == record['draft_id']
-                    and entries[0].get('draft_fold_path') == str(target), 'Draft registration conflicts')
+                    and same_native_path(entries[0].get('draft_fold_path'), target), 'Draft registration conflicts')
             phase = 'index_already_registered'
             result = dict(verify_live_fn(out), status='already_registered', index_written=False, audit=str(audit))
             write(audit / 'result.json', result)
@@ -711,8 +805,9 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
         write(audit / 'prepared.json', {'temporary_index': str(temporary), 'target': str(target),
                                       'index_sha256': nd.digest(temporary), 'resumed': resume})
         if not resume:
-            stage = nd.DRAFT_ROOT / ('.jy14-headless-' + uuid.uuid4().hex)
-            shutil.copytree(out / 'draft', stage, copy_function=shutil.copy2)
+            stage = private_transaction_root() / ('incoming-' + uuid.uuid4().hex)
+            media_evidence = copy_draft_dependencies(out / 'draft', stage, record)
+            write(audit / 'media-materialization.json', media_evidence)
             require(files_manifest(stage) == record['files'], 'Staged file copy differs')
             h._ensure_editor_closed(True)
             h._revalidate_snapshot(root, 'before registering new draft')
@@ -790,10 +885,13 @@ def verify_live(out):
     for asset in record['assets']:
         require(nd.digest(target / asset['relative']) == asset['sha256'], 'Draft-owned media changed')
     resources.verify_files(record.get('native_resources', []), target, plan)
+    av_plan.verify_files(record.get('native_av_resources',[]),target,plan,project_target=target)
     font_files = fonts.verify_assets(font_assets, timeline, target, target) if font_assets is not None else 0
-    root = read_json(nd.DRAFT_ROOT / 'root_meta_info.json')
+    index_path = (nd._windows.draft_index_path(nd.DRAFT_ROOT) if nd.IS_WINDOWS
+                  else nd.DRAFT_ROOT / 'root_meta_info.json')
+    root = read_json(index_path)
     entries = [e for e in root['all_draft_store'] if e.get('draft_id') == record['draft_id']]
-    require(len(entries) == 1 and entries[0]['draft_fold_path'] == str(target), 'Home registration missing or ambiguous')
+    require(len(entries) == 1 and same_native_path(entries[0]['draft_fold_path'], target), 'Home registration missing or ambiguous')
     return {'status': 'verified', 'draft': str(target), 'name': target.name, 'duration_us': timeline.get('duration', 0),
             'native_timeline_schema': timeline['new_version'],
             'tracks': [{'type': t['type'], 'segments': len(t['segments'])} for t in timeline.get('tracks', [])],

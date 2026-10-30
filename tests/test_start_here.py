@@ -79,7 +79,14 @@ class FirstDraftTests(unittest.TestCase):
             calls.append(command)
             return subprocess.CompletedProcess(command, 0,
                 json.dumps(self.media) if command[0] == 'ffprobe' else '{}', '')
-        with patch.object(start, 'ROOT', self.folder), patch.object(start, 'run', side_effect=success), contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(start, 'ROOT', self.folder))
+            stack.enter_context(patch.object(start, 'run', side_effect=success))
+            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            if os.name == 'nt':
+                # Windows resolves its workspace independently of the source root.
+                stack.enter_context(patch('local_config.workspace_root',
+                                          return_value=self.folder / 'work'))
             start.build(str(self.source))
             start.build(str(self.source))
         jobs = list((self.folder / 'work').iterdir())

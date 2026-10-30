@@ -1,0 +1,41 @@
+﻿排名,项目,适配总分,跨风格30,时序25,参考视觉15,接入15,实现10,成本5,许可范围,可学习能力,限制,仓库
+1,OrkasVideoStudio,83,25,21,13,12,8,4,MIT,参考拆解、条件化剪辑方法、设计审稿、EDL,早期；Windows有代码分支但本机未验；没有剪映导出,https://github.com/Orkas-AI/Orkas-VideoStudio
+2,Qwen3-VL,83,25,18,14,14,9,3,Apache-2.0；所核权重同许可,图表/OCR/布局与带时间的视频理解,不处理声音；6GB需另测小模型/量化或远端,https://github.com/QwenLM/Qwen3-VL
+3,HyperFrames,82,23,20,15,11,9,4,Apache-2.0,信息图、动态排版、逐步呈现、声音/动效时序及设计方法,框架由Agent作创作判断；不直接导出可编辑剪映图层,https://github.com/heygen-com/hyperframes
+4,OpenMontage,80,26,20,14,8,8,4,AGPL-3.0；依赖另核,多类型创意路线、解释片导演、实拍混合动态图形,参考来源误判和严重问题放行规则需修正；编排较重,https://github.com/calesthio/OpenMontage
+5,Qwen3-Omni,79,25,22,11,11,9,1,Apache-2.0；所核权重同许可,结合讲话、音乐与画面分析音画关系,官方BF16显存远超6GB；适合远端少量关键片段,https://github.com/QwenLM/Qwen3-Omni
+6,InternVideo3,77,24,22,11,10,8,2,Apache-2.0；所核权重同许可,长素材检索、时间定位和证据复核,研究部署复杂；8B非6GB即用,https://github.com/OpenGVLab/InternVideo
+7,video-use,77,23,20,11,11,9,3,MIT,对白驱动EDL、逐切口检查、剪辑执行方法,主要依靠转写和按需图帧；非连续声画审美,https://github.com/browser-use/video-use
+8,Motion Canvas,77,20,19,14,11,9,4,MIT,与旁白同步的矢量信息图、解释动画,需要写TS；不自动理解素材或作叙事决策,https://github.com/motion-canvas/motion-canvas
+9,OpenFilm,75,22,19,13,9,8,4,MIT,实拍与HTML/SVG/3D图形组合，可视与代码编辑,新增编辑器与现有剪映重叠；非审美模型,https://github.com/openfilm/openfilm
+10,Animation Principles,75,24,18,12,11,5,5,MIT,注意力引导、预备与回报、节奏变化等可复用判断词汇,知识型skills，未有大师质量评测；不应把规则绝对化,https://github.com/dylantarre/animation-principles
+11,Manim Community,74,20,17,14,10,9,4,MIT,概念的渐进图解、关系图、数据动画,引擎非导演；擅长解释图形，实拍混剪需衔接,https://github.com/ManimCommunity/manim
+12,mimic-mcp,74,19,20,14,10,8,3,MIT,多参考作品统计、镜内变化、style-spec与对照审查,Windows缺Apple OCR/TTS，节拍功能有回退,https://github.com/pouyashahrdami/mimic-mcp
+13,VideoLLaMA 3,74,22,17,13,11,8,3,Apache-2.0；所核权重同许可,图表、多图与视频时间定位,CUDA/FlashAttention等依赖；Windows本机未测,https://github.com/DAMO-NLP-SG/VideoLLaMA3
+14,FireRed-OpenStoryline,74,22,19,10,12,8,3,Apache-2.0,理解片段→文案→时间线，few-shot风格与Skill归档,复杂信息设计弱于专用图形引擎；增强Demo资源不全开放,https://github.com/FireRedTeam/FireRed-OpenStoryline
+15,video-shotcraft,73,21,18,14,9,8,3,Apache-2.0；Remotion另许可,镜头配方、产品视觉、分镜、动效与声音设计,偏产品宣传；剪映出口仅声明macOS11.2验证,https://github.com/Vincentwei1021/video-shotcraft
+16,Diffusion Studio Editor,72,21,19,12,8,9,3,MPL-2.0,代码与时间线同步、动态图形与预览修订,更像替换编辑器，现有项目接入成本高,https://github.com/diffusionstudio/editor
+17,LearningToCut,68,21,21,7,9,7,3,MIT；数据/素材另核,学习真实电影切点，比较多个候选剪法,旧研究栈；局部切点合理性不是整片叙事,https://github.com/PardoAlejo/LearningToCut
+18,HKUDS VideoAgent,65,21,17,10,8,7,2,MIT；嵌套依赖另核,理解、编辑、改编的任务分解与工具路由,多模型/API；官方8GB要求高于本机6GB,https://github.com/HKUDS/VideoAgent
+19,PySceneDetect,64,7,18,10,15,9,5,BSD-3-Clause,可复核的镜头边界、时长和节奏基准,测量切点，不理解为何该切；可能误判图形变化,https://github.com/Breakthrough/PySceneDetect
+20,editstyle / CutAI,64,16,17,10,10,7,4,MIT,多参考学习与可移植EDITSTYLE.md,alpha；偏Mac优化；保存模式不等于通用审美,https://github.com/mindsurf0176/editstyle
+21,MovieCuts,63,22,17,8,7,6,3,MIT；数据需申请,动作切、反应切、J/L-cut等剪辑语法,README平均AP47.91%；Match Cut2.43%；旧栈,https://github.com/PardoAlejo/MovieCuts
+22,VideoScore2,62,18,13,13,9,7,2,MIT代码；权重逐项另核,可解释视频质量、文本对齐与物理一致性,偏生成视频，不能评判讲解逻辑和信息阅读节奏,https://github.com/TIGER-AI-Lab/VideoScore2
+23,VideoDB Director,62,20,17,8,8,8,1,MIT；VideoDB服务另算,长素材索引、语义检索、摘要和片段编排,依赖云服务；不是完全本地免费能力,https://github.com/video-db/Director
+24,Kinocut,61,12,16,8,12,9,4,Apache-2.0,MCP剪辑工具、质量回执、可追踪审查,执行强，新增审美判断有限；与现有引擎重复,https://github.com/KyaniteLabs/kinocut
+25,Shot2Story,61,20,16,7,9,7,2,Apache-2.0代码；标注CC-BY-NC-SA,镜头事实→段落→故事的分层记忆,标注非商业，不能直接装入商用知识库,https://github.com/bytedance/Shot2Story
+26,TransNet V2,58,6,19,9,12,8,4,MIT,神经镜头边界检测，定位复杂切换,没有审美或语义判断；环境需隔离,https://github.com/soCzech/TransNetV2
+27,Beat This!,57,6,21,2,14,9,5,MIT代码及发布权重,音乐节拍/强拍时间，CPU可用,口播的语义节奏不应机械吸到音乐鼓点,https://github.com/CPJKU/beat_this
+28,WhisperX,55,6,19,3,14,9,4,BSD-2-Clause代码；模型另核,词级时钟和说话人划分，辅助旁白驱动视觉,识别/对齐会错；本机显存与具体模型另测,https://github.com/m-bain/whisperX
+29,librosa,55,5,20,2,14,9,5,ISC,起音、节拍、能量等声音特征,不理解故事和情绪，只输出信号特征,https://github.com/librosa/librosa
+30,OpenTimelineIO,55,8,13,5,15,10,4,Apache-2.0,镜头顺序、时长和媒体引用的标准编辑决策格式,不渲染、不自动剪辑；没有已验剪映连接器,https://github.com/AcademySoftwareFoundation/OpenTimelineIO
+31,Edit3K,54,14,8,13,10,6,3,MIT代码；数据许可另核,学习效果、动画、转场等六类组件表示,数据gated约1.74TB，不适合本机全量训练,https://github.com/GX77/Edit3K
+32,ShotSeqBench,54,18,17,5,6,5,3,Apache-2.0代码；源数据另核,镜头顺序对照、电影元数据、顺序评价问题,基准/标注为主，不是可直接生产的剪辑Agent,https://github.com/litchiar/ShotSeqBench
+33,Shotpilot,53,14,16,7,5,7,4,MIT,运动稳定度、速度与镜头多样性,无人机题材偏重；fcntl导致Windows不支持,https://github.com/tskupinski/shotpilot
+34,SAM 2,52,6,10,14,10,9,3,Apache-2.0代码及检查点,人物/机器狗分割和跟踪，为构图、遮罩让位,Windows官方建议WSL；不会判断何时该强调主体,https://github.com/facebookresearch/sam2
+35,Auto-Editor,50,5,15,3,13,9,5,Unlicense,静音/运动规则粗剪及编辑器格式输出,删静音不能替代判断有价值的停顿,https://github.com/WyattBlue/auto-editor
+36,Editly,48,5,12,9,10,8,4,MIT,JSON声明多轨、字幕、转场与声音组合,是执行框架；Windows依赖适配未验证,https://github.com/mifi/editly
+37,Clapper,47,16,12,9,4,4,2,GPL-3.0,角色、场景与故事交互,很早期，官方承认部分失效且无tests；偏生成,https://github.com/jbilcke-hf/clapper
+38,AI Video Agent,46,8,16,8,5,5,4,MIT,参考blueprint和镜头分配结构,所谓语义/审美实际为OpenCV阈值；目标Resolve,https://github.com/NSK-394/ai-video-agent
+39,pyJianYingDraft,41,4,8,7,9,8,5,Apache-2.0,剪映草稿轨道与关键帧编排参考,增加执行接口不增加审美；10.8支持不能外推本机11.4.7,https://github.com/GuanYixuan/pyJianYingDraft
+40,AutoCutAI,39,5,13,3,8,6,4,Apache-2.0,帧精确节拍粗剪和CSV EDL,现实现仅简单beat policy；符号/情绪理解还是愿景,https://github.com/Kuonirad/AutoCutAI-Autonomous-AI-Video-Editor-that-Understands-Semiotics-Rhythm

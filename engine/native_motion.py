@@ -39,8 +39,10 @@ def validate(spec, kind):
         series = spec['keyframes']
         allowed = set(KEYFRAMES) if kind == 'video' else {'volume'} if kind == 'audio' else {'x', 'y', 'scale', 'rotation'}
         require(isinstance(series, dict) and series and not set(series) - allowed, 'Unsupported keyframe channel')
-        require(spec.get('speed', 1) == 1 and spec.get('source_start_us', 0) == 0,
-                'Keyframes on trimmed/speed-adjusted sources need a separately verified time mapping')
+        require(spec.get('speed', 1) == 1,
+                'Keyframes on speed-adjusted sources need a separately verified time mapping')
+        require(spec.get('source_start_us', 0) == 0 or kind == 'video',
+                'Trimmed-source keyframe clock is currently reviewed for video only')
         for channel, points in series.items():
             require(isinstance(points, list) and len(points) >= 2, 'Use at least two keyframe points')
             previous = -1
@@ -56,6 +58,14 @@ def validate(spec, kind):
     if 'mask' in spec:
         require(kind == 'video', 'Masks require visual media on a video track')
         mask = spec['mask']
+        if isinstance(mask, dict) and 'preset' in mask:
+            require(set(mask) <= {'preset', 'config'} and mask['preset'] in {'mask/circle', 'mask/circle-soft'},
+                    'Unsupported Windows mask preset fields')
+            from windows_mask_controls import public_config
+            config = public_config(mask.get('config', {}), complete=True)
+            require(mask['preset'] == 'mask/circle-soft' or config['feather'] == 0,
+                    'Legacy circle resources do not render soft feather; use mask/circle-soft')
+            return
         require(isinstance(mask, dict) and not set(mask) - {
                 'shape', 'width', 'height', 'x', 'y', 'rotation', 'feather', 'invert', 'round_corner'}, 'Unsupported mask fields')
         require(mask.get('shape') in MASKS, 'Unsupported geometric mask shape')
@@ -70,16 +80,23 @@ def validate(spec, kind):
 
 
 def keyframe_groups(spec):
+    # Native common-keyframe offsets use the source clock, even at speed 1.
+    # The public plan keeps at_us local to the edited segment. Real 5163s
+    # source trims were pixel-checked in both native preview and ExportService.
+    source_start = spec.get('source_start_us', 0)
     groups = []
     for channel, points in spec.get('keyframes', {}).items():
         groups.append({'id': uid(), 'material_id': '', 'property_type': KEYFRAMES[channel][0], 'keyframe_list': [
             {'id': uid(), 'curveType': 'Line', 'graphID': '', 'left_control': {'x': 0.0, 'y': 0.0},
-             'right_control': {'x': 0.0, 'y': 0.0}, 'time_offset': p['at_us'], 'values': [p['value']]}
+             'right_control': {'x': 0.0, 'y': 0.0}, 'time_offset': source_start + p['at_us'], 'values': [p['value']]}
             for p in points]})
     return groups
 
 
 def mask_config(mask):
+    if 'preset' in mask:
+        from windows_mask_controls import public_config, native_values, FIXED
+        return {**FIXED, 'invert': False, **native_values(public_config(mask.get('config', {}), complete=True))}
     entry = resources.definition('mask/' + mask['shape'])
     return {'aspectRatio': entry['aspect_ratio'], 'centerX': mask.get('x', 0), 'centerY': mask.get('y', 0),
             'width': mask.get('width', .28), 'height': mask.get('height', 1 if mask['shape'] == 'line' else .5),
@@ -88,8 +105,10 @@ def mask_config(mask):
 
 
 def mask_material(mask, target):
-    node = resources.material('mask/' + mask['shape'], target)
-    node.update(id=uid(), constant_material_id=uid(), config=mask_config(mask))
+    node = resources.material(resources.mask_key(mask), target)
+    node.update(id=uid(), config=mask_config(mask))
+    if 'preset' not in mask:
+        node['constant_material_id'] = uid()
     return node
 
 
@@ -135,7 +154,8 @@ def verify(actual, index, spec, kind, tolerance):
             require(len(points) == len(wanted), 'Keyframe point count changed')
             for point, expected in zip(points, wanted):
                 require(point.get('curveType', 'Line') == 'Line', 'Keyframe interpolation changed')
-                require(abs(point.get('time_offset', 0) - expected['at_us']) <= tolerance, 'Keyframe time changed')
+                require(abs(point.get('time_offset', 0) - spec.get('source_start_us', 0) - expected['at_us']) <= tolerance,
+                        'Keyframe time changed')
                 require(len(point['values']) == 1 and abs(point['values'][0] - expected['value']) < 1e-5,
                         'Keyframe value changed')
         if 'scale' in animated:
@@ -143,13 +163,20 @@ def verify(actual, index, spec, kind, tolerance):
     if 'mask' in spec:
         masks = [index[r][1] for r in actual.get('extra_material_refs', []) if index[r][0] == 'common_mask']
         require(len(masks) == 1, 'Mask binding changed')
-        wanted = resources.definition('mask/' + spec['mask']['shape'])['material']
+        wanted = resources.definition(resources.mask_key(spec['mask']))['material']
         for field in ('category', 'category_id', 'resource_type', 'resource_id'):
             require(masks[0].get(field) == wanted[field], 'Mask resource identity changed: ' + field)
+        if 'preset' in spec['mask']:
+            from windows_mask_controls import validate_native_config
+            for field, value in wanted.items():
+                if field != 'config':
+                    actual_value = masks[0].get(field, False if field == 'is_old_version' else None)
+                    require(actual_value == value, 'Mask resource identity changed: ' + field)
+            validate_native_config(masks[0]['config'], allow_feather=spec['mask']['preset'] == 'mask/circle-soft')
         require(actual.get('enable_video_mask', True) is True, 'Mask disabled')
         config = masks[0]['config']
         for field, value in mask_config(spec['mask']).items():
-            if spec['mask']['shape'] == 'line' and field == 'height':
+            if spec['mask'].get('shape') == 'line' and field == 'height':
                 # Native canonicalizes this unused half-plane field to 1.
                 # The public plan rejects width/height for line masks.
                 continue

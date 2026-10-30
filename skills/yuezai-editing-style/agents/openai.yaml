@@ -1,0 +1,4 @@
+interface:
+  display_name: "粤仔剪辑风格"
+  short_description: "用真实参考范例和条件规则，将机器狗直播剪成有反转与温暖回报的切片"
+  default_prompt: "Use $yuezai-editing-style to review my source video and edit it with the evidence-bound YueZai style."

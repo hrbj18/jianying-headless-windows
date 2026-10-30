@@ -17,6 +17,7 @@ import time
 import jy14_headless as j
 import native_compound as compound
 import native_fonts as fonts
+import media_store
 from runtime_profiles import validate_timeline_schema, saved_schema_upgrade
 
 SCHEMA = 'jy14-edit-plan/v1'
@@ -367,6 +368,8 @@ def apply_operations(timeline, metadata, operations, target):
 def write_owned(path, payload):
     """Replace only a file in the newly created, task-owned build directory."""
     j.require(not path.is_symlink(), 'Symlink in copied draft')
+    j.require(not path.exists() or path.stat().st_nlink == 1,
+              'Metadata writer cannot modify a shared file; isolate ownership first')
     data = payload if isinstance(payload, bytes) else j.nd.packed(payload)
     with path.open('wb') as stream:
         stream.write(data)
@@ -390,6 +393,40 @@ def validate_media_interval(segment, info, original, replacement=False, duplicat
     frame = math.ceil(1_000_000 / original.get('fps', 30))
     j.require(known_interval and padding <= frame, 'Edited trim exceeds source media')
     return padding
+
+
+def copy_source_snapshot(source, destination, source_files, timeline):
+    """Share only timeline-declared local media; metadata is independently owned.
+
+    This also covers native saved-draft names and prior replacement-media paths,
+    rather than assuming every clip lives in a headless-media directory.
+    """
+    source = Path(source).resolve(strict=True)
+    owned_media = set()
+    for _, child in compound.graph(timeline):
+        for bucket in ('videos', 'audios'):
+            for node in child.get('materials', {}).get(bucket, []):
+                raw = node.get('path')
+                if not isinstance(raw, str) or not raw or '://' in raw:
+                    continue
+                path = j.native_media_path(raw, source)
+                if path.is_relative_to(source):
+                    relative = path.relative_to(source)
+                    j.require(str(relative) in source_files,
+                              'Draft-owned media is missing from the verified source inventory')
+                    owned_media.add(relative)
+    evidence = []
+
+    def copy_file(src, dst):
+        relative = Path(src).relative_to(source)
+        if j.nd.IS_WINDOWS and relative in owned_media:
+            info = source_files[str(relative)]
+            evidence.append(media_store.materialize_immutable(src, dst, info['sha256']))
+            return str(dst)
+        return shutil.copy2(src, dst)
+
+    shutil.copytree(source, destination, copy_function=copy_file)
+    return evidence
 
 
 def build(plan_path, out):
@@ -444,7 +481,7 @@ def build(plan_path, out):
                                              'reason': 'preserved-existing-native-frame-rounding'})
     out = j.nd.fresh_directory(out)
     folder = out / 'draft'
-    shutil.copytree(source, folder, copy_function=shutil.copy2)
+    media_materialization = copy_source_snapshot(source, folder, source_files, original)
     j.require(j.files_manifest(folder) == source_files and j.files_manifest(source) == source_files, 'Source/copy changed during snapshot')
     now = time.time_ns() // 1000
     metadata.update(draft_id=j.identifier(), draft_name=target.name, draft_fold_path=str(target),
@@ -453,7 +490,10 @@ def build(plan_path, out):
     for asset in assets + font_assets:
         destination = folder / asset['relative']
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if not destination.exists():
+        if j.nd.IS_WINDOWS and asset in assets:
+            media_materialization.append(media_store.materialize_immutable(
+                asset['source'], destination, asset['sha256']))
+        elif not destination.exists():
             with Path(asset['source']).open('rb') as src, destination.open('xb') as dst:
                 shutil.copyfileobj(src, dst)
         j.require(j.nd.digest(destination) == asset['sha256'] == j.nd.digest(asset['source']), 'Replacement bytes changed')
@@ -507,12 +547,17 @@ def build(plan_path, out):
     j.write(out / 'plan.json', plan)
     j.write(out / 'source-timeline.json', original)
     j.write(out / 'expected-timeline.json', timeline)
+    if j.nd.IS_WINDOWS:
+        j.write(out / 'media-materialization.json', {'schema': media_store.SCHEMA,
+                'contract': media_store.IMMUTABLE_CONTRACT, 'files': media_materialization})
     record = {'schema': BUILD_SCHEMA, 'runtime_manifest': j.nd.MANIFEST_SHA, 'runtime_profile': j.nd.doctor()['runtime_profile'],
               'name': target.name, 'target': str(target), 'draft_id': metadata['draft_id'], 'timeline_id': timeline['id'],
               'project_id': project['id'], 'duration_us': timeline['duration'], 'source': str(source),
               'source_files': source_files, 'files': j.files_manifest(folder), 'resources': resources,
               'plan_sha256': j.nd.digest(out / 'plan.json'), 'expected_timeline_sha256': j.nd.digest(out / 'expected-timeline.json'),
               'operations': applied, 'new_assets': assets, 'font_assets': font_assets,
+              'media_materialization': media_materialization,
+              'media_copy_policy': ('draft-owned-read-only-cas-links' if j.nd.IS_WINDOWS else 'independent-copies'),
               'unknown_fields_preserved_before_native_save': True,
               'media_dependencies': media_dependencies,
               'compound_sidecars': compound_sidecars,

@@ -1,0 +1,376 @@
+{
+  "schema": "yuezai-production-evidence/v2",
+  "date": "2026-10-19",
+  "foundation_profile_version": 1,
+  "scope": "制作指导证据，未改变v1冻结profile参数；审美需与相近参考和实际成片对比。",
+  "source_library": "D:\\刘宇钊\\粤仔视频\\原素材",
+  "private_evidence_root": "D:\\JianyingHeadless\\work\\yuezai-opt-20261019\\reference-forensics",
+  "viewing": {
+    "total_source_seconds": 340.930023,
+    "whole_sequence_nominal_fps": 1,
+    "whole_sequence_frames": 341,
+    "whole_sequence_pages_actually_viewed": 24,
+    "dense_fps": 5,
+    "dense_frames_actually_viewed": 193,
+    "dense_pages_actually_viewed": 20,
+    "dense_event_boundary_uncertainty_seconds": 0.1,
+    "full_resolution_keyframes_extracted": 12,
+    "keyframes_viewed_as_contact_sheets": 3,
+    "full_audio_tracks_listened": false
+  },
+  "sources": [
+    {
+      "reference_index": 50,
+      "file_name": "碰到美女的粤仔激动到摔跤了，哈哈哈#粤仔#广州机器狗粤仔#宇树机器狗#AI机器狗#四足机器人_xWT111.mp4",
+      "sha256": "d7fe37fb29d320c9a495e66adbb719906b25eb3fb3ff450f46c6ba0fb1c88a83",
+      "duration_seconds": 32.786009,
+      "whole_sequence_frames": 33
+    },
+    {
+      "reference_index": 51,
+      "file_name": "社牛机器狗粤仔上线啦🥳，没有工资，是只吃电的 “纯牛马”！在公园偶遇一群漂亮姐姐，花式夸奖不停。主动组队合照，从四姐妹一路集齐六朵金花，粤仔和姐姐的粉色穿.mp4",
+      "sha256": "2ede6da130a7e1da100e47c180c38d05a99c81022b79a8f3a656b110cb4904e1",
+      "duration_seconds": 139.9,
+      "whole_sequence_frames": 140
+    },
+    {
+      "reference_index": 45,
+      "file_name": "沙面岛遇上四位漂亮阿姨，大家开心合影留念！拍完才发现照片存在小梅哥哥手机里，阿姨们没有照片。可爱的粤仔提议重新拍摄，321 茄子，欢乐不停，氛围感直接拉满～#粤.mp4",
+      "sha256": "281113df42da5031aac7f99c8f041be2d449bc252ecf885f1da4596fdcc988b1",
+      "duration_seconds": 54.868005,
+      "whole_sequence_frames": 55
+    },
+    {
+      "reference_index": 60,
+      "file_name": "粤仔撩妹金句频出，一句 _做狗要有分寸感_ 把两位姐姐逗疯了#粤仔#广州机器狗粤仔#高情商#撩人金句#闺蜜情_xWT111.mp4",
+      "sha256": "53139e5a5c552cfd0ae618c514122934f5449a8000b851af65a759bdd469b7e2",
+      "duration_seconds": 86.0,
+      "whole_sequence_frames": 86
+    },
+    {
+      "reference_index": 43,
+      "file_name": "机器狗粤仔自信喊话要当大哥罩着小伙伴，热情上前打招呼，还准备一起奔跑玩耍，没想到直接把小狗吓跑了！可爱又滑稽的一幕，笑点满满，看完心情都变好了🐶#粤仔#广州.mp4",
+      "sha256": "480a91f1369b35dc5bb5e47d47d1782e041a7a78473da345c5b9e89524867e7e",
+      "duration_seconds": 27.376009,
+      "whole_sequence_frames": 27
+    }
+  ],
+  "dense_windows": [
+    {
+      "reference_index": 50,
+      "start": 0,
+      "end": 9,
+      "frames": 45
+    },
+    {
+      "reference_index": 50,
+      "start": 27,
+      "end": 32.6,
+      "frames": 28
+    },
+    {
+      "reference_index": 51,
+      "start": 42,
+      "end": 46,
+      "frames": 20
+    },
+    {
+      "reference_index": 51,
+      "start": 69,
+      "end": 73,
+      "frames": 20
+    },
+    {
+      "reference_index": 45,
+      "start": 2,
+      "end": 4,
+      "frames": 10
+    },
+    {
+      "reference_index": 45,
+      "start": 37,
+      "end": 41,
+      "frames": 20
+    },
+    {
+      "reference_index": 60,
+      "start": 2,
+      "end": 5,
+      "frames": 15
+    },
+    {
+      "reference_index": 60,
+      "start": 19,
+      "end": 23,
+      "frames": 20
+    },
+    {
+      "reference_index": 60,
+      "start": 77,
+      "end": 80,
+      "frames": 15
+    }
+  ],
+  "rules": [
+    {
+      "id": "P01",
+      "name": "把气氛字当作事件脉冲",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 50,
+          "range_seconds": [
+            1.4,
+            2.0
+          ],
+          "observation": "黄色问号从小到大、数量增加，匹配怎么握手的疑问。",
+          "evidence_page": "ref-050/dense-0-9/page-01.jpg"
+        },
+        {
+          "reference_index": 50,
+          "range_seconds": [
+            7.2,
+            8.0
+          ],
+          "observation": "蓝白没事吗短时出现在狗上方，底部白黄字幕仍是独立层。",
+          "evidence_page": "ref-050/dense-0-9/page-04.jpg"
+        },
+        {
+          "reference_index": 45,
+          "range_seconds": [
+            37.8,
+            39.6
+          ],
+          "observation": "太聪明了从单行逐渐增为多行、多尺度、不同角度，结束后清空。",
+          "evidence_page": "ref-045/dense-37-41/page-01.jpg"
+        },
+        {
+          "reference_index": 60,
+          "range_seconds": [
+            78.0,
+            80.0
+          ],
+          "observation": "真人大笑时黄色线条与多个哈字依次出现，围绕脸而非全遮脸。",
+          "evidence_page": "ref-060/dense-77-80/page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P02",
+      "name": "普通字幕、关键词、金句三层分工",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 50,
+          "range_seconds": [
+            0.3,
+            1.3
+          ],
+          "observation": "跟你们握握手白字，握握手为黄色。",
+          "evidence_page": "ref-050/dense-0-9/page-01.jpg"
+        },
+        {
+          "reference_index": 51,
+          "range_seconds": [
+            45.1,
+            45.9
+          ],
+          "observation": "我也是广州的靓女，白色句子只突出我也是/广州/靓女词组，黄词随时间移动。",
+          "evidence_page": "ref-051/dense-42-46/page-02.jpg"
+        },
+        {
+          "reference_index": 60,
+          "range_seconds": [
+            19.1,
+            20.3
+          ],
+          "observation": "你是我的量身定做为整行粉白厚字+爱心，随后让位给笑字，和普通黄红正文区别明显。",
+          "evidence_page": "ref-060/dense-19-23/page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P03",
+      "name": "动作失败保全过程，反应后接自嘲形成回报",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 50,
+          "range_seconds": [
+            2.1,
+            9.0
+          ],
+          "observation": "抬腿握手→3.3秒倾倒→4.1秒后仰地→6.5秒滚转→8.9秒恢复姿态，汗滴约4.1–5.3秒，没事吗约7.3–7.9秒。",
+          "evidence_page": "ref-050/dense-0-9/page-02.jpg"
+        },
+        {
+          "reference_index": 50,
+          "range_seconds": [
+            27.7,
+            32.5
+          ],
+          "observation": "对白解释操作失误/见到美女紧张了，同时在28.3–28.9秒及30.1–31.7秒做两次不同位置的蓝白大字。",
+          "evidence_page": "ref-050/dense-27-32.6/page-02.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P04",
+      "name": "笑字爆发有进入、增加、退出",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 51,
+          "range_seconds": [
+            43.3,
+            45.0
+          ],
+          "observation": "多尺度哈哈哈哈横向移动，约43.3秒开始、45.1秒已完全退出，真人笑容清楚。",
+          "evidence_page": "ref-051/dense-42-46/page-01.jpg"
+        },
+        {
+          "reference_index": 45,
+          "range_seconds": [
+            37.9,
+            39.5
+          ],
+          "observation": "太聪明了数量逐步增加，39.7秒切为重新拍一张单条大字。",
+          "evidence_page": "ref-045/dense-37-41/page-02.jpg"
+        },
+        {
+          "reference_index": 60,
+          "range_seconds": [
+            78.1,
+            79.9
+          ],
+          "observation": "先黄线条，后若干哈字依次出现，围绕笑脸环状分布。",
+          "evidence_page": "ref-060/dense-77-80/page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P05",
+      "name": "现场合照做短相纸回报",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 45,
+          "range_seconds": [
+            3.1,
+            3.7
+          ],
+          "observation": "321之后白框相纸从单框变叠层倾斜，主体清楚保留，3.9秒回现场。",
+          "evidence_page": "ref-045/dense-2-4/page-01.jpg"
+        },
+        {
+          "reference_index": 45,
+          "range_seconds": [
+            52.5,
+            53.8
+          ],
+          "observation": "第二次完成合影，再出现相纸叠层，然后CTA。",
+          "evidence_page": "ref-045/whole-page-04.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P06",
+      "name": "现场夸赞用短爱心，温暖节点停手",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 51,
+          "range_seconds": [
+            70.1,
+            72.9
+          ],
+          "observation": "赞你们是公园最靓丽风景线，发光心形随镜头横移，人脸与现场仍清楚。",
+          "evidence_page": "ref-051/dense-69-73/page-01.jpg"
+        },
+        {
+          "reference_index": 60,
+          "range_seconds": [
+            19.1,
+            20.3
+          ],
+          "observation": "量身定做金句配红心；真人大笑后切换笑字而不把爱心留住。",
+          "evidence_page": "ref-060/dense-19-23/page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P07",
+      "name": "同故事高光预告后有明确回落",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 60,
+          "range_seconds": [
+            0.2,
+            4.8
+          ],
+          "observation": "先量身定做和大笑，约4.5秒短暂显著压暗，4.7秒回到问籍贯，19秒后正文兑现量身定做。",
+          "evidence_page": "ref-060/dense-2-5/page-02.jpg"
+        },
+        {
+          "reference_index": 51,
+          "range_seconds": [
+            0.2,
+            4.6
+          ],
+          "observation": "前几秒预告绿衣姐姐与蓝/粉姐妹风景线，随后回黄衣/粉裙开场；70秒后同句以爱心再次兑现。",
+          "evidence_page": "ref-051/whole-page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P08",
+      "name": "小画中画是短时吐槽，现场关系画面保持主体",
+      "evidence_kind": "observed-in-rendered-reference",
+      "support": [
+        {
+          "reference_index": 45,
+          "range_seconds": [
+            40.5,
+            40.9
+          ],
+          "observation": "说这样阿姨都没有照片，小猫汗滴画中画出现在人物腿/狗上方空处。",
+          "evidence_page": "ref-045/dense-37-41/page-02.jpg"
+        },
+        {
+          "reference_index": 43,
+          "range_seconds": [
+            1.5,
+            3.5
+          ],
+          "observation": "开场机器狗称大哥罩着小狗，人物胸前短插电影表情小窗，后续大部分现场无额外特效。",
+          "evidence_page": "ref-043/whole-page-01.jpg"
+        }
+      ]
+    },
+    {
+      "id": "P09",
+      "name": "声音标点",
+      "evidence_kind": "new-production-guidance",
+      "basis": "用户反馈与当前成片缺少声音设计；参考未完整试听，具体曲目与混音未确证。"
+    },
+    {
+      "id": "P10",
+      "name": "去水与动态构图",
+      "evidence_kind": "new-production-guidance",
+      "basis": "用户反馈与当前成片主线分散；数码推近、蒙版聚焦和回放参数未从参考原工程确证。"
+    }
+  ],
+  "evidence_sheets": [
+    "evidence-01-fall.jpg",
+    "evidence-02-sisters.jpg",
+    "evidence-03-reaction.jpg"
+  ],
+  "limits": [
+    "为覆盖整片的逐秒采样+特定事件5fps密集采样，不等于逐帧完整播放或完整听音轨。",
+    "5fps页面时间是采样中心估计，范围边界约±0.1秒；精确关键帧用独立seek抽取。",
+    "未据动态画面反推原工程，未确证镜头变化是数码推近还是拍摄者移动。",
+    "未确证参考原始变速/慢放/回放参数，不把新方案回放冒称原片规则。",
+    "RMS/瞬态检测只能描述客观音量变化，不能识别具体声效或证明有无背景音乐。"
+  ]
+}

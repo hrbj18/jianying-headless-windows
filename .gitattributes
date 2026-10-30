@@ -5,7 +5,12 @@
 *.cpp text eol=lf
 *.h text eol=lf
 *.yaml text eol=lf
+*.mjs text eol=lf
+*.lua text eol=lf
+*.ps1 text eol=lf
 *.txt text eol=lf
+*.csv text eol=lf
+*.ts text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
 NOTICE text eol=lf

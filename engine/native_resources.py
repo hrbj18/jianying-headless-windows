@@ -74,6 +74,14 @@ def catalog():
 
 
 def definition(key):
+    if key in {'windows-mask/circle', 'windows-mask/circle-soft'}:
+        import windows_vfx as vfx
+        from runtime_profiles import WINDOWS_1147_PROFILE
+        preset = key.removeprefix('windows-')
+        entry = vfx.catalog()['resources'][preset]
+        return {'material': deepcopy(entry['material_template']), 'files': deepcopy(entry['files']),
+                'tree_sha256': entry['tree_sha256'], 'runtime_profile': WINDOWS_1147_PROFILE,
+                'source': vfx.load_config().get('windows_vfx_resources', {}).get(preset, '')}
     data = catalog()
     require(key in data['resources'], 'Native resource has no verified local capture: ' + key)
     return deepcopy(data['resources'][key])
@@ -82,11 +90,34 @@ def definition(key):
 def relative_path(entry):
     fingerprint = entry['tree_sha256']
     require(len(fingerprint) == 64 and set(fingerprint) <= set('0123456789abcdef'), 'Invalid resource identity')
+    if entry.get('runtime_profile') == 'jy14-headless-windows-11.4.7.14462':
+        # The full SHA remains the resource identity. Only the owned directory
+        # spelling is compact, leaving room for Windows' publish staging path.
+        return 'Resources/vfx/' + fingerprint[:16]
     return 'Resources/headless-native/' + fingerprint
 
 
+def accepted_relative_paths(entry):
+    current = relative_path(entry)
+    legacy = 'Resources/headless-native/' + entry['tree_sha256']
+    return (current, legacy) if current != legacy else (current,)
+
+
+def check_path_collisions(entries):
+    identities = {}
+    for _, entry in entries:
+        relative = relative_path(entry)
+        full_hash = entry['tree_sha256']
+        require(identities.setdefault(relative, full_hash) == full_hash,
+                'Compact native resource path collision; full package hashes differ')
+
+
+def mask_key(mask):
+    return 'windows-' + mask['preset'] if 'preset' in mask else 'mask/' + mask['shape']
+
+
 def wanted_keys(plan):
-    result = {'mask/' + s['mask']['shape'] for t in plan['tracks'] for s in t['segments'] if 'mask' in s}
+    result = {mask_key(s['mask']) for t in plan['tracks'] for s in t['segments'] if 'mask' in s}
     result.update('transition/' + s['transition_out']['name'] for t in plan['tracks'] for s in t['segments']
                   if 'transition_out' in s)
     result.update(t['type'] + '/' + s['name'] for t in plan['tracks'] if t['type'] in {'filter', 'effect'}
@@ -101,11 +132,19 @@ def prepare(plan, folder, runtime):
     if not keys:
         return []
     data = catalog()
-    validate_resource_profile(runtime['runtime_profile'], data['runtime_profile'])
     records = []
-    for key in keys:
-        entry = definition(key)
+    entries = [(key, definition(key)) for key in keys]
+    check_path_collisions(entries)
+    for key, entry in entries:
+        if key.startswith('windows-mask/'):
+            import windows_vfx as vfx
+            vfx._profile(runtime)
+        else:
+            validate_resource_profile(runtime['runtime_profile'], data['runtime_profile'])
         source = Path(entry['source'])
+        if key.startswith('windows-mask/'):
+            require(source == vfx.resource_path(key.removeprefix('windows-')),
+                    'Windows mask source differs from its reviewed binding')
         require(source.is_absolute() and source.resolve(strict=True) == source,
                 'Native resource source must be the captured canonical directory')
         generated = verify_cached_manifest(entry, tree_manifest(source), 'Native resource bytes differ from captured identity')
@@ -119,7 +158,7 @@ def prepare(plan, folder, runtime):
                 copied = dest / name
                 copied.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
                 shutil.copyfile(source / name, copied, follow_symlinks=False)
-        require(tree_manifest(dest) == entry['files'], 'Native resource changed during copy')
+        require(tree_manifest(dest) == entry['files'], 'Native resource changed during copy or compact path collision')
         verify_cached_manifest(entry, tree_manifest(source), 'Native resource changed during copy')
         # Preserve resource contents and metadata; files remain local to the draft.
         for path in [dest] + list(dest.rglob('*')):
@@ -145,7 +184,7 @@ def verify_files(records, folder, plan):
     require([r['key'] for r in records] == wanted_keys(plan), 'Native resource inventory differs from plan')
     for record in records:
         entry = definition(record['key'])
-        require(record['relative'] == relative_path(entry) and record['files'] == entry['files']
+        require(record['relative'] in accepted_relative_paths(entry) and record['files'] == entry['files']
                 and record['tree_sha256'] == entry['tree_sha256'], 'Native resource record changed')
         require(record.get('usage') == entry.get('usage'), 'Native resource usage boundary changed')
         require(tree_manifest(Path(folder) / record['relative']) == entry['files'], 'Draft-owned native resource bytes changed')
@@ -154,7 +193,7 @@ def verify_files(records, folder, plan):
 def verify_binding(key, value, target, resolve_native_path, allow_native_cache=False):
     entry = definition(key)
     actual = resolve_native_path(value, Path(target))
-    if actual == (Path(target) / relative_path(entry)).resolve():
+    if any(actual == (Path(target) / relative).resolve() for relative in accepted_relative_paths(entry)):
         return {'key': key, 'location': 'draft-owned'}
     # Observed native 11.4.2 save resolves known resource IDs back to its cache.
     # Accept only that exact captured directory AND its exact contents, never

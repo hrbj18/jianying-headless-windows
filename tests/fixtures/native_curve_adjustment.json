@@ -1,0 +1,334 @@
+{
+  "duration": 4000000,
+  "tracks": [
+    {
+      "id": "fixture-video-track",
+      "type": "video",
+      "segments": [
+        {
+          "id": "fixture-video-segment",
+          "material_id": "F3D645A1-2BD8-5F31-988F-65EAA0F7AEEA",
+          "target_timerange": {
+            "start": 0,
+            "duration": 4000000
+          },
+          "extra_material_refs": []
+        }
+      ]
+    },
+    {
+      "id": "E603D211-BA50-5008-891C-404F42CAC931",
+      "type": "adjust",
+      "segments": [
+        {
+          "id": "611CF27F-FB93-57A6-96A2-F965D0FEB1DA",
+          "target_timerange": {
+            "duration": 3000000
+          },
+          "render_timerange": {},
+          "material_id": "BE030955-8BA1-5642-9C6C-820135E8D7E7",
+          "extra_material_refs": [
+            "AD409355-8615-5D43-9B82-98D682C585D7",
+            "A8A82F6F-E801-5B07-974A-A8D6EE386C16",
+            "AC7D4DE1-4EE0-5EDF-8B04-D8F4A98D0F98",
+            "CFF97F60-F5F4-5027-BD94-E308B36FD4AC",
+            "7BC3368B-7221-5D05-BB6E-7A808CB6C57F",
+            "3AAF7F9B-02EA-5140-A9B8-0374D59464D9",
+            "F0AA9BF9-59FB-5C90-B3FE-3132FEC0F2CE"
+          ],
+          "enable_lut": false,
+          "enable_adjust": false,
+          "enable_hsl": false,
+          "enable_hsl_curves": false,
+          "track_render_index": 1,
+          "responsive_layout": {},
+          "source": "segmentsourcenormal"
+        }
+      ],
+      "is_default_name": true
+    }
+  ],
+  "materials": {
+    "effects": [
+      {
+        "id": "7BC3368B-7221-5D05-BB6E-7A808CB6C57F",
+        "resource_id": "",
+        "type": "smart_color_adjust",
+        "sub_type": "none",
+        "path": "C:/reviewed-color",
+        "value": 0.8,
+        "version": "v3",
+        "color_match_info": {},
+        "multi_language_current": "",
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path",
+        "beauty_face_auto_retouch_info": {}
+      },
+      {
+        "id": "3AAF7F9B-02EA-5140-A9B8-0374D59464D9",
+        "resource_id": "",
+        "type": "color_match",
+        "sub_type": "none",
+        "path": "C:/reviewed-color",
+        "value": 0.8,
+        "version": "v3",
+        "color_match_info": {
+          "source_feature_path": "##_draftpath_placeholder_0E685133-18CE-45ED-8CB8-2904A212EC80_##/color_match/color_match_source_feature_1.match"
+        },
+        "multi_language_current": "",
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path",
+        "beauty_face_auto_retouch_info": {}
+      },
+      {
+        "id": "F0AA9BF9-59FB-5C90-B3FE-3132FEC0F2CE",
+        "resource_id": "",
+        "type": "color_correct",
+        "sub_type": "none",
+        "path": "C:/reviewed-color",
+        "value": 0.8,
+        "version": "v3",
+        "color_match_info": {},
+        "multi_language_current": "",
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path",
+        "beauty_face_auto_retouch_info": {}
+      }
+    ],
+    "placeholders": [
+      {
+        "id": "BE030955-8BA1-5642-9C6C-820135E8D7E7",
+        "name": "Adjustment fixture",
+        "type": "adjust"
+      }
+    ],
+    "color_curves": [
+      {
+        "id": "AD409355-8615-5D43-9B82-98D682C585D7",
+        "type": "color_curves",
+        "panel": "curve-hsl",
+        "resource_id": "7040008114145333791",
+        "path": "C:/reviewed-color",
+        "luma": [
+          {
+            "anchor": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "left_control": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "right_control": {
+              "x": 0.16,
+              "y": 0.1
+            }
+          },
+          {
+            "anchor": {
+              "x": 0.5,
+              "y": 0.56
+            },
+            "left_control": {
+              "x": 0.35,
+              "y": 0.45
+            },
+            "right_control": {
+              "x": 0.65,
+              "y": 0.67
+            }
+          },
+          {
+            "anchor": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "left_control": {
+              "x": 0.84,
+              "y": 0.93
+            },
+            "right_control": {
+              "x": 0.0,
+              "y": 0.0
+            }
+          }
+        ],
+        "red": [
+          {
+            "anchor": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "left_control": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "right_control": {
+              "x": 0.12,
+              "y": 0.1
+            }
+          },
+          {
+            "anchor": {
+              "x": 0.45,
+              "y": 0.48
+            },
+            "left_control": {
+              "x": 0.33,
+              "y": 0.33
+            },
+            "right_control": {
+              "x": 0.6,
+              "y": 0.68
+            }
+          },
+          {
+            "anchor": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "left_control": {
+              "x": 0.84,
+              "y": 0.94
+            },
+            "right_control": {
+              "x": 0.0,
+              "y": 0.0
+            }
+          }
+        ],
+        "green": [
+          {
+            "anchor": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "left_control": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "right_control": {
+              "x": 0.2,
+              "y": 0.21
+            }
+          },
+          {
+            "anchor": {
+              "x": 0.58,
+              "y": 0.55
+            },
+            "left_control": {
+              "x": 0.4,
+              "y": 0.42
+            },
+            "right_control": {
+              "x": 0.74,
+              "y": 0.72
+            }
+          },
+          {
+            "anchor": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "left_control": {
+              "x": 0.88,
+              "y": 0.9
+            },
+            "right_control": {
+              "x": 0.0,
+              "y": 0.0
+            }
+          }
+        ],
+        "blue": [
+          {
+            "anchor": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "left_control": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "right_control": {
+              "x": 0.15,
+              "y": 0.2
+            }
+          },
+          {
+            "anchor": {
+              "x": 0.52,
+              "y": 0.47
+            },
+            "left_control": {
+              "x": 0.35,
+              "y": 0.34
+            },
+            "right_control": {
+              "x": 0.68,
+              "y": 0.64
+            }
+          },
+          {
+            "anchor": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "left_control": {
+              "x": 0.85,
+              "y": 0.9
+            },
+            "right_control": {
+              "x": 0.0,
+              "y": 0.0
+            }
+          }
+        ],
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path"
+      }
+    ],
+    "hsl_curves": [
+      {
+        "id": "A8A82F6F-E801-5B07-974A-A8D6EE386C16",
+        "type": "",
+        "panel": "curve-hsl",
+        "resource_id": "7040008114145333791",
+        "path": "C:/reviewed-color",
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path"
+      }
+    ],
+    "primary_color_wheels": [
+      {
+        "id": "AC7D4DE1-4EE0-5EDF-8B04-D8F4A98D0F98",
+        "type": "primary_color_wheels",
+        "panel": "curve-hsl",
+        "resource_id": "7062543820910498341",
+        "path": "C:/reviewed-color",
+        "lift": {},
+        "gamma": {},
+        "gain": {},
+        "offset": {},
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path"
+      }
+    ],
+    "log_color_wheels": [
+      {
+        "id": "CFF97F60-F5F4-5027-BD94-E308B36FD4AC",
+        "type": "log_color_wheels",
+        "panel": "curve-hsl",
+        "resource_id": "7062543643705348622",
+        "path": "C:/reviewed-color",
+        "shadow": {},
+        "midtone": {},
+        "highlight": {},
+        "offset": {},
+        "lumi_hub_path": "C:/reviewed-color/lumi_hub_path"
+      }
+    ],
+    "videos": [
+      {
+        "id": "F3D645A1-2BD8-5F31-988F-65EAA0F7AEEA",
+        "type": "video",
+        "path": "fixture.mp4"
+      }
+    ]
+  }
+}

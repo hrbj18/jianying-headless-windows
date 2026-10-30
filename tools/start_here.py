@@ -26,13 +26,14 @@ from runtime_profiles import validate_identity
 from build_toolchain import select_toolchain
 
 APP = Path('/Applications/VideoFusion-macOS.app')
-ENTRY = ROOT / 'skills/yichen-jianying-edit/scripts/headless_draft.py'
+ENTRY = ROOT / ('jianying.py' if os.name == 'nt' else
+                'skills/yichen-jianying-edit/scripts/headless_draft.py')
 
 
 def run(command, timeout=60):
-    env = dict(os.environ, JIANYING_HEADLESS_ROOT=str(ROOT))
+    env = dict(os.environ, JIANYING_HEADLESS_ROOT=str(ROOT), PYTHONUTF8='1')
     return subprocess.run(command, cwd=ROOT, env=env, capture_output=True,
-                          text=True, timeout=timeout)
+                          text=True, encoding='utf-8', timeout=timeout)
 
 
 def digest(path):
@@ -98,6 +99,8 @@ def check():
 
 def check_windows(add, rows):
     """Windows 预检：只检查真正受支持的本地运行时条件。"""
+    from local_config import configure_environment
+    configure_environment()
     add('PASS', '系统', platform.system() + ' ' + platform.release() + ' / ' + platform.machine())
     add('PASS' if sys.version_info >= (3, 9) else 'FAIL', 'Python', platform.python_version())
     add('PASS' if sys.maxsize > 2 ** 32 else 'FAIL', 'Python 架构', '需要 64 位 Python')
@@ -126,7 +129,12 @@ def check_windows(add, rows):
         ready = False
     add('PASS' if ready else 'WARN', '剪映首页',
         '默认草稿目录已初始化' if ready else '登记首页前需先打开剪映、创建并保存一个空白工程、正常退出')
-    add('WARN', '原生导出', 'Windows 尚未适配原生导出；需要成片时请在剪映界面内导出')
+    try:
+        from windows_native_toolchain import _toolchain
+        _, clang = _toolchain()
+        add('PASS', '原生导出编译器', str(clang))
+    except (OSError, ValueError) as error:
+        add('FAIL', '原生导出编译器', str(error))
     failed = any(row['level'] == 'FAIL' for row in rows)
     print('检查未通过，请先处理 FAIL。' if failed else
           '基础条件检查通过。WARN 需按说明处理；这不是画面、声音或导出验收。')
@@ -184,6 +192,9 @@ def make_plan(source, data, name):
 
 
 def build(raw):
+    if os.name == 'nt':
+        from local_config import configure_environment
+        configure_environment()
     doctor = run([sys.executable, str(ENTRY), 'doctor'])
     if doctor.returncode:
         raise ValueError('doctor 未通过。先运行 check 和桥接构建。\n' + doctor.stderr)
@@ -197,8 +208,12 @@ def build(raw):
         raise ValueError('无法读取视频；请确认文件已下载到本机。\n' + probe.stderr)
     plan = make_plan(source, json.loads(probe.stdout), 'first-draft')
     before = digest(source)
-    work = ROOT / 'work'
-    work.mkdir(exist_ok=True)
+    if os.name == 'nt':
+        from local_config import workspace_root
+        work = workspace_root()
+    else:
+        work = ROOT / 'work'
+    work.mkdir(parents=True, exist_ok=True)
     job = Path(tempfile.mkdtemp(prefix='first-draft-', dir=work))
     plan['name'] = job.name
     (job / 'plan.json').write_text(json.dumps(plan, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -226,7 +241,7 @@ def build(raw):
     (job / 'next-steps.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     labels = {'publish': '保存工作并完全退出剪映后，登记到本机首页',
               'verify': '打开播放、保存退出、冷重开检查，再次退出后回读',
-              'export': '可选：导出最初构建的快照，不包含后来手工修改（Windows 目前不可用）'}
+              'export': '可选：导出最初构建的快照，不包含后来手工修改'}
     notes = '# ' + plan['name'] + '\n'
     for key, label in labels.items():
         notes += '\n## ' + label + '\n\n```' + shell + '\n' + report['commands'][key] + '\n```\n'

@@ -1,0 +1,695 @@
+{
+  "date": "2026-10-27",
+  "scope": "research-only; no installation or candidate execution",
+  "weights": [
+    30,
+    25,
+    15,
+    15,
+    10,
+    5
+  ],
+  "scoreMeaning": "subjective fit to cross-style editing judgement, the supplied explainer reference, Windows RTX3050 6GB and the existing Jianying pipeline; not measured quality or success rate",
+  "candidates": [
+    {
+      "name": "OrkasVideoStudio",
+      "repo": "Orkas-AI/Orkas-VideoStudio",
+      "url": "https://github.com/Orkas-AI/Orkas-VideoStudio",
+      "parts": [
+        25,
+        21,
+        13,
+        12,
+        8,
+        4
+      ],
+      "score": 83,
+      "license": "MIT",
+      "value": "参考拆解、条件化剪辑方法、设计审稿、EDL",
+      "limit": "早期；Windows有代码分支但本机未验；没有剪映导出"
+    },
+    {
+      "name": "Qwen3-VL",
+      "repo": "QwenLM/Qwen3-VL",
+      "url": "https://github.com/QwenLM/Qwen3-VL",
+      "parts": [
+        25,
+        18,
+        14,
+        14,
+        9,
+        3
+      ],
+      "score": 83,
+      "license": "Apache-2.0；所核权重同许可",
+      "value": "图表/OCR/布局与带时间的视频理解",
+      "limit": "不处理声音；6GB需另测小模型/量化或远端"
+    },
+    {
+      "name": "HyperFrames",
+      "repo": "heygen-com/hyperframes",
+      "url": "https://github.com/heygen-com/hyperframes",
+      "parts": [
+        23,
+        20,
+        15,
+        11,
+        9,
+        4
+      ],
+      "score": 82,
+      "license": "Apache-2.0",
+      "value": "信息图、动态排版、逐步呈现、声音/动效时序及设计方法",
+      "limit": "框架由Agent作创作判断；不直接导出可编辑剪映图层"
+    },
+    {
+      "name": "OpenMontage",
+      "repo": "calesthio/OpenMontage",
+      "url": "https://github.com/calesthio/OpenMontage",
+      "parts": [
+        26,
+        20,
+        14,
+        8,
+        8,
+        4
+      ],
+      "score": 80,
+      "license": "AGPL-3.0；依赖另核",
+      "value": "多类型创意路线、解释片导演、实拍混合动态图形",
+      "limit": "参考来源误判和严重问题放行规则需修正；编排较重"
+    },
+    {
+      "name": "Qwen3-Omni",
+      "repo": "QwenLM/Qwen3-Omni",
+      "url": "https://github.com/QwenLM/Qwen3-Omni",
+      "parts": [
+        25,
+        22,
+        11,
+        11,
+        9,
+        1
+      ],
+      "score": 79,
+      "license": "Apache-2.0；所核权重同许可",
+      "value": "结合讲话、音乐与画面分析音画关系",
+      "limit": "官方BF16显存远超6GB；适合远端少量关键片段"
+    },
+    {
+      "name": "InternVideo3",
+      "repo": "OpenGVLab/InternVideo",
+      "url": "https://github.com/OpenGVLab/InternVideo",
+      "parts": [
+        24,
+        22,
+        11,
+        10,
+        8,
+        2
+      ],
+      "score": 77,
+      "license": "Apache-2.0；所核权重同许可",
+      "value": "长素材检索、时间定位和证据复核",
+      "limit": "研究部署复杂；8B非6GB即用"
+    },
+    {
+      "name": "video-use",
+      "repo": "browser-use/video-use",
+      "url": "https://github.com/browser-use/video-use",
+      "parts": [
+        23,
+        20,
+        11,
+        11,
+        9,
+        3
+      ],
+      "score": 77,
+      "license": "MIT",
+      "value": "对白驱动EDL、逐切口检查、剪辑执行方法",
+      "limit": "主要依靠转写和按需图帧；非连续声画审美"
+    },
+    {
+      "name": "Motion Canvas",
+      "repo": "motion-canvas/motion-canvas",
+      "url": "https://github.com/motion-canvas/motion-canvas",
+      "parts": [
+        20,
+        19,
+        14,
+        11,
+        9,
+        4
+      ],
+      "score": 77,
+      "license": "MIT",
+      "value": "与旁白同步的矢量信息图、解释动画",
+      "limit": "需要写TS；不自动理解素材或作叙事决策"
+    },
+    {
+      "name": "OpenFilm",
+      "repo": "openfilm/openfilm",
+      "url": "https://github.com/openfilm/openfilm",
+      "parts": [
+        22,
+        19,
+        13,
+        9,
+        8,
+        4
+      ],
+      "score": 75,
+      "license": "MIT",
+      "value": "实拍与HTML/SVG/3D图形组合，可视与代码编辑",
+      "limit": "新增编辑器与现有剪映重叠；非审美模型"
+    },
+    {
+      "name": "Animation Principles",
+      "repo": "dylantarre/animation-principles",
+      "url": "https://github.com/dylantarre/animation-principles",
+      "parts": [
+        24,
+        18,
+        12,
+        11,
+        5,
+        5
+      ],
+      "score": 75,
+      "license": "MIT",
+      "value": "注意力引导、预备与回报、节奏变化等可复用判断词汇",
+      "limit": "知识型skills，未有大师质量评测；不应把规则绝对化"
+    },
+    {
+      "name": "Manim Community",
+      "repo": "ManimCommunity/manim",
+      "url": "https://github.com/ManimCommunity/manim",
+      "parts": [
+        20,
+        17,
+        14,
+        10,
+        9,
+        4
+      ],
+      "score": 74,
+      "license": "MIT",
+      "value": "概念的渐进图解、关系图、数据动画",
+      "limit": "引擎非导演；擅长解释图形，实拍混剪需衔接"
+    },
+    {
+      "name": "mimic-mcp",
+      "repo": "pouyashahrdami/mimic-mcp",
+      "url": "https://github.com/pouyashahrdami/mimic-mcp",
+      "parts": [
+        19,
+        20,
+        14,
+        10,
+        8,
+        3
+      ],
+      "score": 74,
+      "license": "MIT",
+      "value": "多参考作品统计、镜内变化、style-spec与对照审查",
+      "limit": "Windows缺Apple OCR/TTS，节拍功能有回退"
+    },
+    {
+      "name": "VideoLLaMA 3",
+      "repo": "DAMO-NLP-SG/VideoLLaMA3",
+      "url": "https://github.com/DAMO-NLP-SG/VideoLLaMA3",
+      "parts": [
+        22,
+        17,
+        13,
+        11,
+        8,
+        3
+      ],
+      "score": 74,
+      "license": "Apache-2.0；所核权重同许可",
+      "value": "图表、多图与视频时间定位",
+      "limit": "CUDA/FlashAttention等依赖；Windows本机未测"
+    },
+    {
+      "name": "FireRed-OpenStoryline",
+      "repo": "FireRedTeam/FireRed-OpenStoryline",
+      "url": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
+      "parts": [
+        22,
+        19,
+        10,
+        12,
+        8,
+        3
+      ],
+      "score": 74,
+      "license": "Apache-2.0",
+      "value": "理解片段→文案→时间线，few-shot风格与Skill归档",
+      "limit": "复杂信息设计弱于专用图形引擎；增强Demo资源不全开放"
+    },
+    {
+      "name": "video-shotcraft",
+      "repo": "Vincentwei1021/video-shotcraft",
+      "url": "https://github.com/Vincentwei1021/video-shotcraft",
+      "parts": [
+        21,
+        18,
+        14,
+        9,
+        8,
+        3
+      ],
+      "score": 73,
+      "license": "Apache-2.0；Remotion另许可",
+      "value": "镜头配方、产品视觉、分镜、动效与声音设计",
+      "limit": "偏产品宣传；剪映出口仅声明macOS11.2验证"
+    },
+    {
+      "name": "Diffusion Studio Editor",
+      "repo": "diffusionstudio/editor",
+      "url": "https://github.com/diffusionstudio/editor",
+      "parts": [
+        21,
+        19,
+        12,
+        8,
+        9,
+        3
+      ],
+      "score": 72,
+      "license": "MPL-2.0",
+      "value": "代码与时间线同步、动态图形与预览修订",
+      "limit": "更像替换编辑器，现有项目接入成本高"
+    },
+    {
+      "name": "LearningToCut",
+      "repo": "PardoAlejo/LearningToCut",
+      "url": "https://github.com/PardoAlejo/LearningToCut",
+      "parts": [
+        21,
+        21,
+        7,
+        9,
+        7,
+        3
+      ],
+      "score": 68,
+      "license": "MIT；数据/素材另核",
+      "value": "学习真实电影切点，比较多个候选剪法",
+      "limit": "旧研究栈；局部切点合理性不是整片叙事"
+    },
+    {
+      "name": "HKUDS VideoAgent",
+      "repo": "HKUDS/VideoAgent",
+      "url": "https://github.com/HKUDS/VideoAgent",
+      "parts": [
+        21,
+        17,
+        10,
+        8,
+        7,
+        2
+      ],
+      "score": 65,
+      "license": "MIT；嵌套依赖另核",
+      "value": "理解、编辑、改编的任务分解与工具路由",
+      "limit": "多模型/API；官方8GB要求高于本机6GB"
+    },
+    {
+      "name": "PySceneDetect",
+      "repo": "Breakthrough/PySceneDetect",
+      "url": "https://github.com/Breakthrough/PySceneDetect",
+      "parts": [
+        7,
+        18,
+        10,
+        15,
+        9,
+        5
+      ],
+      "score": 64,
+      "license": "BSD-3-Clause",
+      "value": "可复核的镜头边界、时长和节奏基准",
+      "limit": "测量切点，不理解为何该切；可能误判图形变化"
+    },
+    {
+      "name": "editstyle / CutAI",
+      "repo": "mindsurf0176/editstyle",
+      "url": "https://github.com/mindsurf0176/editstyle",
+      "parts": [
+        16,
+        17,
+        10,
+        10,
+        7,
+        4
+      ],
+      "score": 64,
+      "license": "MIT",
+      "value": "多参考学习与可移植EDITSTYLE.md",
+      "limit": "alpha；偏Mac优化；保存模式不等于通用审美"
+    },
+    {
+      "name": "MovieCuts",
+      "repo": "PardoAlejo/MovieCuts",
+      "url": "https://github.com/PardoAlejo/MovieCuts",
+      "parts": [
+        22,
+        17,
+        8,
+        7,
+        6,
+        3
+      ],
+      "score": 63,
+      "license": "MIT；数据需申请",
+      "value": "动作切、反应切、J/L-cut等剪辑语法",
+      "limit": "README平均AP47.91%；Match Cut2.43%；旧栈"
+    },
+    {
+      "name": "VideoScore2",
+      "repo": "TIGER-AI-Lab/VideoScore2",
+      "url": "https://github.com/TIGER-AI-Lab/VideoScore2",
+      "parts": [
+        18,
+        13,
+        13,
+        9,
+        7,
+        2
+      ],
+      "score": 62,
+      "license": "MIT代码；权重逐项另核",
+      "value": "可解释视频质量、文本对齐与物理一致性",
+      "limit": "偏生成视频，不能评判讲解逻辑和信息阅读节奏"
+    },
+    {
+      "name": "VideoDB Director",
+      "repo": "video-db/Director",
+      "url": "https://github.com/video-db/Director",
+      "parts": [
+        20,
+        17,
+        8,
+        8,
+        8,
+        1
+      ],
+      "score": 62,
+      "license": "MIT；VideoDB服务另算",
+      "value": "长素材索引、语义检索、摘要和片段编排",
+      "limit": "依赖云服务；不是完全本地免费能力"
+    },
+    {
+      "name": "Kinocut",
+      "repo": "KyaniteLabs/kinocut",
+      "url": "https://github.com/KyaniteLabs/kinocut",
+      "parts": [
+        12,
+        16,
+        8,
+        12,
+        9,
+        4
+      ],
+      "score": 61,
+      "license": "Apache-2.0",
+      "value": "MCP剪辑工具、质量回执、可追踪审查",
+      "limit": "执行强，新增审美判断有限；与现有引擎重复"
+    },
+    {
+      "name": "Shot2Story",
+      "repo": "bytedance/Shot2Story",
+      "url": "https://github.com/bytedance/Shot2Story",
+      "parts": [
+        20,
+        16,
+        7,
+        9,
+        7,
+        2
+      ],
+      "score": 61,
+      "license": "Apache-2.0代码；标注CC-BY-NC-SA",
+      "value": "镜头事实→段落→故事的分层记忆",
+      "limit": "标注非商业，不能直接装入商用知识库"
+    },
+    {
+      "name": "TransNet V2",
+      "repo": "soCzech/TransNetV2",
+      "url": "https://github.com/soCzech/TransNetV2",
+      "parts": [
+        6,
+        19,
+        9,
+        12,
+        8,
+        4
+      ],
+      "score": 58,
+      "license": "MIT",
+      "value": "神经镜头边界检测，定位复杂切换",
+      "limit": "没有审美或语义判断；环境需隔离"
+    },
+    {
+      "name": "Beat This!",
+      "repo": "CPJKU/beat_this",
+      "url": "https://github.com/CPJKU/beat_this",
+      "parts": [
+        6,
+        21,
+        2,
+        14,
+        9,
+        5
+      ],
+      "score": 57,
+      "license": "MIT代码及发布权重",
+      "value": "音乐节拍/强拍时间，CPU可用",
+      "limit": "口播的语义节奏不应机械吸到音乐鼓点"
+    },
+    {
+      "name": "WhisperX",
+      "repo": "m-bain/whisperX",
+      "url": "https://github.com/m-bain/whisperX",
+      "parts": [
+        6,
+        19,
+        3,
+        14,
+        9,
+        4
+      ],
+      "score": 55,
+      "license": "BSD-2-Clause代码；模型另核",
+      "value": "词级时钟和说话人划分，辅助旁白驱动视觉",
+      "limit": "识别/对齐会错；本机显存与具体模型另测"
+    },
+    {
+      "name": "librosa",
+      "repo": "librosa/librosa",
+      "url": "https://github.com/librosa/librosa",
+      "parts": [
+        5,
+        20,
+        2,
+        14,
+        9,
+        5
+      ],
+      "score": 55,
+      "license": "ISC",
+      "value": "起音、节拍、能量等声音特征",
+      "limit": "不理解故事和情绪，只输出信号特征"
+    },
+    {
+      "name": "OpenTimelineIO",
+      "repo": "AcademySoftwareFoundation/OpenTimelineIO",
+      "url": "https://github.com/AcademySoftwareFoundation/OpenTimelineIO",
+      "parts": [
+        8,
+        13,
+        5,
+        15,
+        10,
+        4
+      ],
+      "score": 55,
+      "license": "Apache-2.0",
+      "value": "镜头顺序、时长和媒体引用的标准编辑决策格式",
+      "limit": "不渲染、不自动剪辑；没有已验剪映连接器"
+    },
+    {
+      "name": "Edit3K",
+      "repo": "GX77/Edit3K",
+      "url": "https://github.com/GX77/Edit3K",
+      "parts": [
+        14,
+        8,
+        13,
+        10,
+        6,
+        3
+      ],
+      "score": 54,
+      "license": "MIT代码；数据许可另核",
+      "value": "学习效果、动画、转场等六类组件表示",
+      "limit": "数据gated约1.74TB，不适合本机全量训练"
+    },
+    {
+      "name": "ShotSeqBench",
+      "repo": "litchiar/ShotSeqBench",
+      "url": "https://github.com/litchiar/ShotSeqBench",
+      "parts": [
+        18,
+        17,
+        5,
+        6,
+        5,
+        3
+      ],
+      "score": 54,
+      "license": "Apache-2.0代码；源数据另核",
+      "value": "镜头顺序对照、电影元数据、顺序评价问题",
+      "limit": "基准/标注为主，不是可直接生产的剪辑Agent"
+    },
+    {
+      "name": "Shotpilot",
+      "repo": "tskupinski/shotpilot",
+      "url": "https://github.com/tskupinski/shotpilot",
+      "parts": [
+        14,
+        16,
+        7,
+        5,
+        7,
+        4
+      ],
+      "score": 53,
+      "license": "MIT",
+      "value": "运动稳定度、速度与镜头多样性",
+      "limit": "无人机题材偏重；fcntl导致Windows不支持"
+    },
+    {
+      "name": "SAM 2",
+      "repo": "facebookresearch/sam2",
+      "url": "https://github.com/facebookresearch/sam2",
+      "parts": [
+        6,
+        10,
+        14,
+        10,
+        9,
+        3
+      ],
+      "score": 52,
+      "license": "Apache-2.0代码及检查点",
+      "value": "人物/机器狗分割和跟踪，为构图、遮罩让位",
+      "limit": "Windows官方建议WSL；不会判断何时该强调主体"
+    },
+    {
+      "name": "Auto-Editor",
+      "repo": "WyattBlue/auto-editor",
+      "url": "https://github.com/WyattBlue/auto-editor",
+      "parts": [
+        5,
+        15,
+        3,
+        13,
+        9,
+        5
+      ],
+      "score": 50,
+      "license": "Unlicense",
+      "value": "静音/运动规则粗剪及编辑器格式输出",
+      "limit": "删静音不能替代判断有价值的停顿"
+    },
+    {
+      "name": "Editly",
+      "repo": "mifi/editly",
+      "url": "https://github.com/mifi/editly",
+      "parts": [
+        5,
+        12,
+        9,
+        10,
+        8,
+        4
+      ],
+      "score": 48,
+      "license": "MIT",
+      "value": "JSON声明多轨、字幕、转场与声音组合",
+      "limit": "是执行框架；Windows依赖适配未验证"
+    },
+    {
+      "name": "Clapper",
+      "repo": "jbilcke-hf/clapper",
+      "url": "https://github.com/jbilcke-hf/clapper",
+      "parts": [
+        16,
+        12,
+        9,
+        4,
+        4,
+        2
+      ],
+      "score": 47,
+      "license": "GPL-3.0",
+      "value": "角色、场景与故事交互",
+      "limit": "很早期，官方承认部分失效且无tests；偏生成"
+    },
+    {
+      "name": "AI Video Agent",
+      "repo": "NSK-394/ai-video-agent",
+      "url": "https://github.com/NSK-394/ai-video-agent",
+      "parts": [
+        8,
+        16,
+        8,
+        5,
+        5,
+        4
+      ],
+      "score": 46,
+      "license": "MIT",
+      "value": "参考blueprint和镜头分配结构",
+      "limit": "所谓语义/审美实际为OpenCV阈值；目标Resolve"
+    },
+    {
+      "name": "pyJianYingDraft",
+      "repo": "GuanYixuan/pyJianYingDraft",
+      "url": "https://github.com/GuanYixuan/pyJianYingDraft",
+      "parts": [
+        4,
+        8,
+        7,
+        9,
+        8,
+        5
+      ],
+      "score": 41,
+      "license": "Apache-2.0",
+      "value": "剪映草稿轨道与关键帧编排参考",
+      "limit": "增加执行接口不增加审美；10.8支持不能外推本机11.4.7"
+    },
+    {
+      "name": "AutoCutAI",
+      "repo": "Kuonirad/AutoCutAI-Autonomous-AI-Video-Editor-that-Understands-Semiotics-Rhythm",
+      "url": "https://github.com/Kuonirad/AutoCutAI-Autonomous-AI-Video-Editor-that-Understands-Semiotics-Rhythm",
+      "parts": [
+        5,
+        13,
+        3,
+        8,
+        6,
+        4
+      ],
+      "score": 39,
+      "license": "Apache-2.0",
+      "value": "帧精确节拍粗剪和CSV EDL",
+      "limit": "现实现仅简单beat policy；符号/情绪理解还是愿景"
+    }
+  ]
+}

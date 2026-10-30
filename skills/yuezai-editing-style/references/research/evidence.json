@@ -1,0 +1,557 @@
+{
+  "name": "粤仔剪辑风格",
+  "version": "0.1",
+  "training_frozen_before_holdout": true,
+  "reviewed_sheets": {
+    "93a0f40724b399c06eb28cc59d11472788fdd4018a092c1ec956ce63ee8a0403": [
+      "CHAPTER-001-S001"
+    ],
+    "c1fe996398450114376bc45a9e1d17b24c0728a7814682dd048e7c84cff8f11c": [
+      "CHAPTER-001-S001",
+      "CHAPTER-001-S008"
+    ],
+    "03eade90650a8c9f5d5d8df8520d8079ef477ef30bdcfb34de73f84c45e52794": [
+      "CHAPTER-001-S001"
+    ],
+    "860f1f3bed7117b9dbd4348c17b1fd6dfe6a743633db782cb38cfa347ad3b32a": [
+      "CHAPTER-001-S001",
+      "CHAPTER-001-S008"
+    ],
+    "2b7fb1dd6785e6681055824f3780d8813e99c177b93c1afcde64a8449c6c9fd3": [
+      "CHAPTER-001-S001"
+    ],
+    "5b5e7d42cc305fa789edd4e5c6e650a6f85feb42d94186aeb6eb881705981d73": [
+      "CHAPTER-001-S001"
+    ],
+    "fd372298479c931f471f8790c91377fbcdd36d460738d0dc97978bf8ab81ed4d": [
+      "CHAPTER-001-S001"
+    ],
+    "b4d586934b76375b60bbfccbde236d35017dec1c277dc6c17c02127d84de93df": [
+      "CHAPTER-001-S001"
+    ],
+    "532880ecf7dfe51f19f89f8f5f28c83e545a04ca9c92b16a61fcd7c52b8e7ca1": [
+      "CHAPTER-001-S001"
+    ],
+    "8ed2c9829c5013697f1400d26dc75466bfdb6c0c23ca11befaf0a5c3ba2ba496": [
+      "CHAPTER-001-S001"
+    ],
+    "552985a256abf10cd30833702960a06375192097eb85fc8c58edc0277894c086": [
+      "CHAPTER-001-S001"
+    ],
+    "9b8f66dfe08290b1c9f19771d0b87f8c860de3467f12b9cc104415f5011f9157": [
+      "CHAPTER-001-S001",
+      "CHAPTER-001-S007"
+    ]
+  },
+  "rules": [
+    {
+      "id": "R01",
+      "name": "单次相遇形成微故事",
+      "trigger": "同一组路人/同一事件有可理解的问答或动作结果",
+      "instruction": "以一句问题或反应进入，保留必要身份和答复，再交代笑点、惊喜或温暖结果；删掉等候与无关串场，不拼接改变原意",
+      "examples": [
+        "E02",
+        "E08",
+        "E12"
+      ],
+      "confidence": "high",
+      "exceptions": "表演和展会短梗可以较少口语，不强行补访谈"
+    },
+    {
+      "id": "R02",
+      "name": "有包袱才做真实冷开场",
+      "trigger": "稍后有无需额外解释也能吸引人的原声金句/反应",
+      "instruction": "用1～3秒原片高光作预告，硬切回最短理解语境，保留后面的铺垫与回应；不要让预告误导因果",
+      "examples": [
+        "E03",
+        "E04",
+        "E05",
+        "E06",
+        "E15"
+      ],
+      "confidence": "high",
+      "exceptions": "英语问候、老人祝福等可直接入场，不强行制造冲突"
+    },
+    {
+      "id": "R03",
+      "name": "竖屏关系构图优先",
+      "trigger": "人和机器狗共同完成互动",
+      "instruction": "保留真人脸部、机器狗动作和双方空间关系；默认原比例，只有不裁掉任一方才轻微推近",
+      "examples": [
+        "E01",
+        "E02",
+        "E08",
+        "E13"
+      ],
+      "confidence": "high",
+      "exceptions": "不把全身互动一律裁成狗头特写"
+    },
+    {
+      "id": "R04",
+      "name": "可读的短句原声字幕",
+      "trigger": "可辨识原声问答",
+      "instruction": "常规对话采用粗体橙黄字、暗描边，位于画面约77～80%高，按真实词时钟分成约8～12字短句；核对粤仔/方言/数字，不把ASR错字直接烧入",
+      "examples": [
+        "E01",
+        "E02",
+        "E08",
+        "E09"
+      ],
+      "confidence": "high",
+      "exceptions": "演出/展会/温暖人物主题有白字粉描边或米白子类；颜色不是身份判定"
+    },
+    {
+      "id": "R05",
+      "name": "把视觉重音留给真实反应",
+      "trigger": "画面确有笑容、惊讶、爱心或动作",
+      "instruction": "包袱后保留约0.6～1.5秒真实反应，才加一次哈哈/问号/心动等普通大字；字幕叙事层和反应字分层，避免挡脸挡狗",
+      "examples": [
+        "E02",
+        "E05",
+        "E09",
+        "E15"
+      ],
+      "confidence": "high",
+      "exceptions": "环卫等温暖题材降低笑声大字密度；无反应画面不编造观众反应"
+    },
+    {
+      "id": "R06",
+      "name": "先完成情感动作再轻收尾",
+      "trigger": "真实告别、祝福、合照、爱心或笑点已有结果",
+      "instruction": "保留自然结束，必要时接约1～2秒品牌关注卡；不在祝福、握手、表演过程中截断",
+      "examples": [
+        "E16",
+        "E17",
+        "E18"
+      ],
+      "confidence": "high",
+      "exceptions": "展会21秒短梗未见品牌片尾，CTA可选，片尾有多个视觉版本"
+    },
+    {
+      "id": "R07",
+      "name": "封面与视频正文分开处理",
+      "trigger": "需要成片封面",
+      "instruction": "单独制作封面，视频立即进入真实内容；若嵌入参考式首帧封面，仅保留约2帧，不做长静态开场",
+      "examples": [
+        "E19",
+        "E20"
+      ],
+      "confidence": "medium",
+      "exceptions": "0.1秒前的封面可能含平台封装习惯，因此不是必须继承的叙事规则"
+    },
+    {
+      "id": "R08",
+      "name": "按事件子类控制节奏",
+      "trigger": "内容属于日常问答、温暖人物、现场表演或展会短梗",
+      "instruction": "以事件完整性决定时长；问答保留自然来回，温暖人物减少喜剧贴字，表演保留连贯动作，短梗可以硬切；不为统一秒数或特效堆叠破坏故事",
+      "examples": [
+        "E10",
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "confidence": "high",
+      "exceptions": "未听完整音轨，音乐曲目、混音音量及音乐版权均不作已验证规则"
+    }
+  ],
+  "examples": [
+    {
+      "id": "E01",
+      "reference_index": 2,
+      "task_id": "93a0f40724b399c06eb28cc59d11472788fdd4018a092c1ec956ce63ee8a0403",
+      "start": 1.9,
+      "end": 5.25,
+      "cell_ids": [
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000004"
+      ],
+      "observation": "人狗同框，英语真实问候，黄字中文译意；不是统一冲突开头"
+    },
+    {
+      "id": "E02",
+      "reference_index": 4,
+      "task_id": "c1fe996398450114376bc45a9e1d17b24c0728a7814682dd048e7c84cff8f11c",
+      "start": 0.2,
+      "end": 5.52,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S001:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002",
+        "ASR-000003"
+      ],
+      "observation": "先教“我是姐姐”，对方复述与笑声，普通黄色对话字幕+侧上方反应大字"
+    },
+    {
+      "id": "E03",
+      "reference_index": 7,
+      "task_id": "03eade90650a8c9f5d5d8df8520d8079ef477ef30bdcfb34de73f84c45e52794",
+      "start": 0.44,
+      "end": 3.28,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "冷开场先给“经常便秘怎么办”问题；同一提问46.3秒再出现"
+    },
+    {
+      "id": "E04",
+      "reference_index": 7,
+      "task_id": "03eade90650a8c9f5d5d8df8520d8079ef477ef30bdcfb34de73f84c45e52794",
+      "start": 4.4,
+      "end": 8.04,
+      "cell_ids": [
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S001:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000004"
+      ],
+      "observation": "冷开场后回归职业问答，医生身份有上下文；抽样3.633秒出现电影表情片段，此次不复用"
+    },
+    {
+      "id": "E05",
+      "reference_index": 10,
+      "task_id": "2b7fb1dd6785e6681055824f3780d8813e99c177b93c1afcde64a8449c6c9fd3",
+      "start": 0.2,
+      "end": 4.5,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "冷开场“皇帝驾崩了”配夸张红字，随后多人真实笑容配哈哈装饰"
+    },
+    {
+      "id": "E06",
+      "reference_index": 10,
+      "task_id": "2b7fb1dd6785e6681055824f3780d8813e99c177b93c1afcde64a8449c6c9fd3",
+      "start": 5,
+      "end": 10.68,
+      "cell_ids": [
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S001:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000002",
+        "ASR-000003",
+        "ASR-000004"
+      ],
+      "observation": "开头包袱后回到问候击掌，31.66秒后完整解释方言梗"
+    },
+    {
+      "id": "E07",
+      "reference_index": 32,
+      "task_id": "fd372298479c931f471f8790c91377fbcdd36d460738d0dc97978bf8ab81ed4d",
+      "start": 0.28,
+      "end": 2.88,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "粤语观众反应先行，粉色爱心和倾斜黄色双行大字，随后接发色话题"
+    },
+    {
+      "id": "E08",
+      "reference_index": 32,
+      "task_id": "fd372298479c931f471f8790c91377fbcdd36d460738d0dc97978bf8ab81ed4d",
+      "start": 3.08,
+      "end": 6.24,
+      "cell_ids": [
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S001:R3C1",
+        "CHAPTER-001-S001:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000002",
+        "ASR-000003"
+      ],
+      "observation": "发色夸奖和回应完整保留，人狗同框，黄粗字中心约0.77高"
+    },
+    {
+      "id": "E09",
+      "reference_index": 8,
+      "task_id": "860f1f3bed7117b9dbd4348c17b1fd6dfe6a743633db782cb38cfa347ad3b32a",
+      "start": 0.7,
+      "end": 4.32,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R2C3"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "开头奶奶真笑脸，哈哈围绕脸部，然后回到真实问候；不在每句强加特效"
+    },
+    {
+      "id": "E10",
+      "reference_index": 19,
+      "task_id": "5b5e7d42cc305fa789edd4e5c6e650a6f85feb42d94186aeb6eb881705981d73",
+      "start": 0.16,
+      "end": 5.08,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R3C1"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "演出子类用白字粉描边，口琴与话筒人物和机器狗同框；不能把所有字幕写死黄色"
+    },
+    {
+      "id": "E11",
+      "reference_index": 39,
+      "task_id": "b4d586934b76375b60bbfccbde236d35017dec1c277dc6c17c02127d84de93df",
+      "start": 0.2,
+      "end": 4.16,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R2C2",
+        "CHAPTER-001-S001:R2C3",
+        "CHAPTER-001-S001:R3C1",
+        "CHAPTER-001-S001:R3C2"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002"
+      ],
+      "observation": "展会短笑点用白色粗字+关键词黄色，几秒后硬切另一个机器人；不要求长访谈或品牌片尾"
+    },
+    {
+      "id": "E12",
+      "reference_index": 41,
+      "task_id": "532880ecf7dfe51f19f89f8f5f28c83e545a04ca9c92b16a61fcd7c52b8e7ca1",
+      "start": 0.24,
+      "end": 5,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R3C2",
+        "CHAPTER-001-S001:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002"
+      ],
+      "observation": "环卫主题是温和对话，米白字幕，靠真实人物与后续工作时间信息推进，不是满屏爆笑字"
+    },
+    {
+      "id": "E13",
+      "reference_index": 43,
+      "task_id": "8ed2c9829c5013697f1400d26dc75466bfdb6c0c23ca11befaf0a5c3ba2ba496",
+      "start": 0.28,
+      "end": 4.54,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1",
+        "CHAPTER-001-S001:R3C1",
+        "CHAPTER-001-S001:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "真人小狗和机器狗同框形成反差，黄字黑边；中间有电影表情画中画，不列必需资源"
+    },
+    {
+      "id": "E14",
+      "reference_index": 52,
+      "task_id": "552985a256abf10cd30833702960a06375192097eb85fc8c58edc0277894c086",
+      "start": 0.2,
+      "end": 1.36,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "先用“你看我穿的裙子”真实片段与笑脸、闪光抓人，再回到介绍"
+    },
+    {
+      "id": "E15",
+      "reference_index": 60,
+      "task_id": "9b8f66dfe08290b1c9f19771d0b87f8c860de3467f12b9cc104415f5011f9157",
+      "start": 0.16,
+      "end": 3.56,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C2",
+        "CHAPTER-001-S001:R1C3",
+        "CHAPTER-001-S001:R2C1"
+      ],
+      "asr_ids": [
+        "ASR-000001",
+        "ASR-000002"
+      ],
+      "observation": "“量身定做”冷开场+真实笑声，哈哈大字对齐人的笑容；18.76秒再次解释星座包袱"
+    },
+    {
+      "id": "E16",
+      "reference_index": 8,
+      "task_id": "860f1f3bed7117b9dbd4348c17b1fd6dfe6a743633db782cb38cfa347ad3b32a",
+      "start": 52.92,
+      "end": 61.46,
+      "cell_ids": [
+        "CHAPTER-001-S008:R1C1",
+        "CHAPTER-001-S008:R1C2",
+        "CHAPTER-001-S008:R1C3",
+        "CHAPTER-001-S008:R2C1",
+        "CHAPTER-001-S008:R2C2",
+        "CHAPTER-001-S008:R2C3",
+        "CHAPTER-001-S008:R3C2",
+        "CHAPTER-001-S008:R3C3"
+      ],
+      "asr_ids": [
+        "ASR-000015",
+        "ASR-000016",
+        "ASR-000017",
+        "ASR-000018",
+        "ASR-000019"
+      ],
+      "observation": "先告别祝开心，后极短黑底头像+点赞关注收藏；动作完成才收尾"
+    },
+    {
+      "id": "E17",
+      "reference_index": 60,
+      "task_id": "9b8f66dfe08290b1c9f19771d0b87f8c860de3467f12b9cc104415f5011f9157",
+      "start": 80.07,
+      "end": 85.91,
+      "cell_ids": [
+        "CHAPTER-001-S007:R1C1",
+        "CHAPTER-001-S007:R1C2",
+        "CHAPTER-001-S007:R1C3",
+        "CHAPTER-001-S007:R2C1",
+        "CHAPTER-001-S007:R2C2",
+        "CHAPTER-001-S007:R2C3"
+      ],
+      "asr_ids": [
+        "ASR-000030",
+        "ASR-000031"
+      ],
+      "observation": "先祝两位姐姐友谊长久、真实告别，然后约1秒品牌CTA"
+    },
+    {
+      "id": "E18",
+      "reference_index": 4,
+      "task_id": "c1fe996398450114376bc45a9e1d17b24c0728a7814682dd048e7c84cff8f11c",
+      "start": 53.05,
+      "end": 54.69,
+      "cell_ids": [
+        "CHAPTER-001-S008:R1C1",
+        "CHAPTER-001-S008:R1C2",
+        "CHAPTER-001-S008:R1C3"
+      ],
+      "asr_ids": [
+        "ASR-000018"
+      ],
+      "observation": "另一种品牌结尾为黑底圆形粤仔头像+我是粤仔/感谢关注，不是唯一固定版式"
+    },
+    {
+      "id": "E19",
+      "reference_index": 4,
+      "task_id": "c1fe996398450114376bc45a9e1d17b24c0728a7814682dd048e7c84cff8f11c",
+      "start": 0,
+      "end": 0.71,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C1",
+        "CHAPTER-001-S001:R1C2"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "0秒含封面，0.7秒已正文；额外0/.033/.1/.3密集抽帧确认封面不超过0.1秒"
+    },
+    {
+      "id": "E20",
+      "reference_index": 7,
+      "task_id": "03eade90650a8c9f5d5d8df8520d8079ef477ef30bdcfb34de73f84c45e52794",
+      "start": 0,
+      "end": 0.94,
+      "cell_ids": [
+        "CHAPTER-001-S001:R1C1",
+        "CHAPTER-001-S001:R1C2"
+      ],
+      "asr_ids": [
+        "ASR-000001"
+      ],
+      "observation": "0秒街头问诊封面，0.933秒进入正文；额外密集抽帧同样0.1秒已正文"
+    }
+  ],
+  "parameters": {
+    "font_path": "C:/Windows/Fonts/Dengb.ttf",
+    "subtitle_size": {
+      "min": 9,
+      "max": 12,
+      "default": 10.5
+    },
+    "subtitle_y": {
+      "min": -0.65,
+      "max": -0.45,
+      "default": -0.56
+    },
+    "subtitle_color": "#FFC33D",
+    "subtitle_border_width": {
+      "min": 0.05,
+      "max": 0.08,
+      "default": 0.06
+    },
+    "subtitle_max_chars": {
+      "min": 6,
+      "max": 14,
+      "default": 10
+    },
+    "title_size": {
+      "min": 8,
+      "max": 22,
+      "default": 16
+    },
+    "title_y": {
+      "min": -0.7,
+      "max": 0.8,
+      "default": 0.52
+    },
+    "video_scale": {
+      "min": 1,
+      "max": 1.12,
+      "default": 1
+    }
+  },
+  "limitations": [
+    "这是12条训练视频+4条独立holdout的本地主题蒸馏，不代表作者全部创作",
+    "看过70条2秒处盘点帧；12条训练每条8个分布式cell、12张S001整页、3张结尾整页及4条16格开头密集抽帧；未声称完整逐帧观看",
+    "语音依据真实百炼ASR与词时钟；未实际听完整音轨，不能断言音乐、笑声效果音、混音音量",
+    "ASR会将粤仔识成月仔/叶仔，方言和医学内容会错；需按画面/上下文核对，不创造未说内容",
+    "参数是本机剪映原生校准近似；贴纸、电影表情、复杂边框不假装已经原样复刻",
+    "没有播放量、完播率与平台数据，不能把风格相近当成爆款概率已验证"
+  ]
+}

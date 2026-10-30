@@ -1,0 +1,234 @@
+{
+  "schema": "jy-windows-audio-resources/v1",
+  "app_build": "11.4.7.14462",
+  "resources": {
+    "audio/radio-master": {
+      "key": "audio/radio-master",
+      "resource_id": "7418519267659747877",
+      "files": {
+        "config.json": {
+          "sha256": "af5a2eaa99225be4853739c004d19d064148dd70923c137aa73d3a85df3f75dc",
+          "size": 148
+        },
+        "extra.json": {
+          "sha256": "626969c0a9ea66dc8eec8de642dc1670b4d78a8cfaec637eb4b98e98dbbb64b1",
+          "size": 313
+        },
+        "mdsp_preset.json": {
+          "sha256": "8433488ea0822b089c02b67a5da2819d8b73cc319900edd63d62430ca0337342",
+          "size": 6288
+        },
+        "preset3.yaml": {
+          "sha256": "977ca8d6bc65f11aa1697c70fe1bdc7560f47e30bd18b31294ffb6297c20321b",
+          "size": 69
+        }
+      },
+      "tree_sha256": "12b4925d6a3d147b67089086e542f4fe5d9fdd947b81d6b5a37c2ff41428b11e",
+      "source": "official material download voice_change",
+      "original_title": "电台播音",
+      "is_vip_in_search": true,
+      "processors": [
+        "Equaliser",
+        "Compressor",
+        "Limiter"
+      ],
+      "redistribute_resources": false,
+      "source_platform": 1,
+      "controls": [
+        {
+          "name": "强度",
+          "parameterIndex": 0,
+          "portIndex": 0,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 1
+        }
+      ],
+      "sub_type": 1
+    },
+    "audio/local-studio": {
+      "key": "audio/local-studio",
+      "resource_id": "local-studio-dsp-v2",
+      "source_platform": 0,
+      "provenance": "Original local configuration authored in native_dsp_graph.py; no downloaded assets",
+      "controls": [
+        {
+          "name": "EQ增益（-20至20dB）",
+          "parameterIndex": 4,
+          "portIndex": 0,
+          "kind": "gain",
+          "default_physical": 0,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5
+        },
+        {
+          "name": "EQ频率（20至20000Hz）",
+          "parameterIndex": 2,
+          "portIndex": 0,
+          "kind": "frequency",
+          "default_physical": 1000,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5663233347786729
+        },
+        {
+          "name": "压缩阈值（-70至0dB）",
+          "parameterIndex": 2,
+          "portIndex": 1,
+          "kind": "threshold",
+          "default_physical": -18,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5518367346938776
+        },
+        {
+          "name": "压缩比例（1至40）",
+          "parameterIndex": 1,
+          "portIndex": 1,
+          "kind": "ratio",
+          "default_physical": 3,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.3047797829639662
+        },
+        {
+          "name": "限制上限（-24至0dB）",
+          "parameterIndex": 2,
+          "portIndex": 2,
+          "kind": "ceiling",
+          "default_physical": -2,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.8904617154967502
+        }
+      ],
+      "files": {
+        "config.json": {
+          "size": 115,
+          "sha256": "8ec9c643025618c52812d90f5dfc6ae26ca456252bbda98d1f29738682e9296f"
+        },
+        "extra.json": {
+          "size": 1106,
+          "sha256": "540620afb327d50f472e00839d6a1df572aea1b5d3e1d19f5c110dbae3106a23"
+        },
+        "mdsp_preset.json": {
+          "size": 5305,
+          "sha256": "aab9e2175d3ea0216410f2566b7c238c0a51144a694f5f497a6cce308fd6a230"
+        },
+        "preset3.yaml": {
+          "size": 70,
+          "sha256": "b3262d57c08b1db74cce9e48b52349aa866b0117bf75011e41fe50b8ebbf4b81"
+        }
+      },
+      "tree_sha256": "d2faa204c7a218e13bfc5992d531dce851eb276734921490d635e4d5008a985d",
+      "sub_type": 1
+    },
+    "audio/local-eq": {
+      "key": "audio/local-eq",
+      "resource_id": "local-studio-eq-v1",
+      "source_platform": 0,
+      "sub_type": 0,
+      "provenance": "Original split native DSP configuration; built-in processors, no downloaded effect content",
+      "controls": [
+        {
+          "name": "EQ增益（-20至20dB）",
+          "parameterIndex": 4,
+          "portIndex": 0,
+          "kind": "gain",
+          "default_physical": 0,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5
+        },
+        {
+          "name": "EQ频率（20至20000Hz）",
+          "parameterIndex": 2,
+          "portIndex": 0,
+          "kind": "frequency",
+          "default_physical": 1000,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5663233347786729
+        }
+      ],
+      "files": {
+        "config.json": {
+          "size": 115,
+          "sha256": "8ec9c643025618c52812d90f5dfc6ae26ca456252bbda98d1f29738682e9296f"
+        },
+        "extra.json": {
+          "size": 473,
+          "sha256": "3ab9bbdc1f2449a9175a5fc45182618b477cd296512432757d57ba62d953b28c"
+        },
+        "mdsp_preset.json": {
+          "size": 2598,
+          "sha256": "10f62342eadd0727ddf130c29ca58c0814e9bf84c1146baa5e58a9da00219b89"
+        },
+        "preset3.yaml": {
+          "size": 70,
+          "sha256": "b3262d57c08b1db74cce9e48b52349aa866b0117bf75011e41fe50b8ebbf4b81"
+        }
+      },
+      "tree_sha256": "6d1ffbbb3ddf5212fbcdc1844b6b0c0df05167b75848782ca93635e693faa5ff"
+    },
+    "audio/local-dynamics": {
+      "key": "audio/local-dynamics",
+      "resource_id": "local-studio-dynamics-v1",
+      "source_platform": 0,
+      "sub_type": 1,
+      "provenance": "Original split native DSP configuration; built-in processors, no downloaded effect content",
+      "controls": [
+        {
+          "name": "压缩阈值（-70至0dB）",
+          "parameterIndex": 2,
+          "portIndex": 0,
+          "kind": "threshold",
+          "default_physical": -18,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.5518367346938776
+        },
+        {
+          "name": "压缩比例（1至40）",
+          "parameterIndex": 1,
+          "portIndex": 0,
+          "kind": "ratio",
+          "default_physical": 3,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.3047797829639662
+        },
+        {
+          "name": "限制上限（-24至0dB）",
+          "parameterIndex": 2,
+          "portIndex": 1,
+          "kind": "ceiling",
+          "default_physical": -2,
+          "min_value": 0,
+          "max_value": 1,
+          "default_value": 0.8904617154967502
+        }
+      ],
+      "files": {
+        "config.json": {
+          "size": 115,
+          "sha256": "8ec9c643025618c52812d90f5dfc6ae26ca456252bbda98d1f29738682e9296f"
+        },
+        "extra.json": {
+          "size": 701,
+          "sha256": "b8630b24e1b552f7e68fd95ba4dbe4eb144a7fd611c55ffd640c35bd8e641b8f"
+        },
+        "mdsp_preset.json": {
+          "size": 3027,
+          "sha256": "e2370fa0ed52066df2d09af2ecf8d0a7c499a0637a7f42f5068f83d9c9aebfab"
+        },
+        "preset3.yaml": {
+          "size": 70,
+          "sha256": "b3262d57c08b1db74cce9e48b52349aa866b0117bf75011e41fe50b8ebbf4b81"
+        }
+      },
+      "tree_sha256": "1848fe673d755d00697ee4c227c1a8691dcc78c8433b5e5579588ce552812289"
+    }
+  }
+}

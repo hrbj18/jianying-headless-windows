@@ -2,13 +2,15 @@
 PRIMARY_VERSION = '11.5.0'
 PROFILE_PREFIX = 'jy14-headless-macos-'
 WINDOWS_PROFILE = 'jy14-headless-windows-11.5.0.14471'
+WINDOWS_1147_PROFILE = 'jy14-headless-windows-11.4.7.14462'
 PROFILES = {
     '11.5.0': '2041482a1aaeffa4d8bd69b836f8cf38807aaad8021bca410d567c59af3bccfa',
     '11.4.2': '632c8ddd09ff4a54f876cd8142eb505055ee26d944199506b230949b7e106bd1',
     '11.4.0': 'a1693070036a6678bb5db35f71d2105812ad24a2370e7e91c78712cc0d6455f3',
 }
 MACOS_EXPORT_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.4.2'))
-EXPORT_PROFILES = MACOS_EXPORT_PROFILES | {WINDOWS_PROFILE}
+WINDOWS_EXPORT_PROFILES = frozenset((WINDOWS_PROFILE, WINDOWS_1147_PROFILE))
+EXPORT_PROFILES = MACOS_EXPORT_PROFILES | WINDOWS_EXPORT_PROFILES
 RESOURCE_CAPTURE_PROFILE = PROFILE_PREFIX + '11.4.2'
 TIMELINE_SCHEMAS = frozenset((('185.0.0', 360000), ('187.0.0', 360000)))
 
@@ -18,10 +20,11 @@ def validate_timeline_schema(timeline, runtime_profile=None):
     if type(schema[1]) is not int or schema not in TIMELINE_SCHEMAS:
         raise ValueError('Unexpected native timeline version')
     if runtime_profile is not None:
-        known = {PROFILE_PREFIX + version for version in PROFILES} | {WINDOWS_PROFILE}
-        reviewed_115 = {PROFILE_PREFIX + '11.5.0', WINDOWS_PROFILE}
+        known = {PROFILE_PREFIX + version for version in PROFILES} | WINDOWS_EXPORT_PROFILES
+        # Both schemas were read back and rendered on the exact Windows 11.4.7 build.
+        reviewed_187 = {PROFILE_PREFIX + '11.5.0'} | WINDOWS_EXPORT_PROFILES
         if runtime_profile not in known or (schema[0] == '187.0.0' and
-                                           runtime_profile not in reviewed_115):
+                                           runtime_profile not in reviewed_187):
             raise ValueError('Native timeline schema is incompatible with this runtime profile')
     return schema
 

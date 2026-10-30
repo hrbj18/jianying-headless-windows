@@ -1,0 +1,5 @@
+{
+  "project_root": null,
+  "style_profile": null,
+  "note": "Install with tools/install_codex_skill.py --name yuezai-editing-style --profile <frozen-profile.json> to bind this checkout and copy the local profile."
+}

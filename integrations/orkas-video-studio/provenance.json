@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/Orkas-AI/Orkas-VideoStudio",
+  "commit": "8a2b51af787830e722f2565b3e13d479ffed5c17",
+  "license": "MIT",
+  "scope": "unmodified EDL validator and reference/design review methods; no hosted platform",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "3cc277eca9df2114e329f81aa439a1880c934bc5954208aa06ed15e5740cffb6"
+    },
+    {
+      "path": "packages/core/src/ir/edl.ts",
+      "sha256": "d60cce8079af7391babf03eab04a2e9d8aa1790777f46419fba177829111185e"
+    },
+    {
+      "path": "packages/skills/video-craft/SKILL.md",
+      "sha256": "72579bf0bccf44744dc51aed4733dce1875057dfad77be7d441edc2cc02e01b0"
+    },
+    {
+      "path": "packages/skills/video-craft/references/reference-recreation.md",
+      "sha256": "abc62ee860e49cf3b078f49ce50fba4c2a4a2115a8f1432b2f6b00296ee7c1b6"
+    },
+    {
+      "path": "packages/skills/composition-design-review/SKILL.md",
+      "sha256": "92b6f03167c57cda993ff70b9def2023d8ef3a365879db6ea7a35d22ca5da2cd"
+    },
+    {
+      "path": "packages/skills/video-craft/references/ecommerce.md",
+      "sha256": "6c644192307b4d8201deb12379fb058c46f8b0fd8b6cf94889ca2ed3aacd2c50"
+    }
+  ]
+}

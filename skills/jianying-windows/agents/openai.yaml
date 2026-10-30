@@ -1,0 +1,4 @@
+interface:
+  display_name: "剪映 Windows"
+  short_description: "云端 ASR 与多宫格审阅本地素材，通过剪映原生运行时剪辑和导出"
+  default_prompt: "Use $jianying-windows to edit and export a video with my local Jianying installation."

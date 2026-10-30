@@ -1,0 +1,14 @@
+{
+  "schema": "jianying-live-bridge/v1",
+  "app_build": "11.4.7.14462",
+  "source_origin": "D:\\JianyingHeadless\\work\\live-edit-v01\\native",
+  "files": {
+    "bridge.cpp": "fadf6dbd95a4a3d6394e3dd90a74180615849eed20c8960ce58987408d58d0d8",
+    "import_operation.cpp": "a31279efda87093107d0252af5ccf05b5f9dadd435c45a33242f302b81baf0e4",
+    "live-qt-pipe-v02.dll": "e27288977c984fa6ade5061d4742d429271226ce2cfadd82029769a3d0fab54a",
+    "move_operation.cpp": "4b9e97cfcb81a521da4b8d23f0de89267a573df1a790a24b7f979380f96f308d",
+    "pipe_bridge.cpp": "f4966cbb806ec15778872f50a5843d1f6754ac7cbe38505b0bb5e414aae579e1",
+    "transition_guard.cpp": "f3b0c4fa1e7d51afd825b754ffe978f2ecc604fcc8d0c1191d47f2f4ecb805db",
+    "typed_call.cpp": "58ae184e66d4ad05a422fc17b3ca8599a10f1ecc6d8742904bf6d76cc2c46906"
+  }
+}

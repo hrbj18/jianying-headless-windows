@@ -43,6 +43,21 @@ class RuntimeProfiles(unittest.TestCase):
             with self.subTest(a=a,b=b),self.assertRaises(ValueError):
                 profiles.validate_export_profiles(profiles.PROFILE_PREFIX+a,profiles.PROFILE_PREFIX+b)
 
+    def test_windows_exports_require_the_same_exact_reviewed_build(self):
+        self.assertEqual(profiles.WINDOWS_EXPORT_PROFILES, frozenset((
+            'jy14-headless-windows-11.4.7.14462', 'jy14-headless-windows-11.5.0.14471')))
+        for profile in profiles.WINDOWS_EXPORT_PROFILES:
+            profiles.validate_export_profiles(profile, profile)
+            with self.assertRaises(ValueError):
+                profiles.validate_resource_profile(profile, profiles.RESOURCE_CAPTURE_PROFILE)
+        with self.assertRaises(ValueError):
+            profiles.validate_export_profiles(profiles.WINDOWS_1147_PROFILE, profiles.WINDOWS_PROFILE)
+        for profile in ('jy14-headless-windows-11.4.7.14463',
+                        'jy14-headless-windows-11.5.0.14472',
+                        'jy14-headless-windows-11.6.0.14552'):
+            with self.subTest(profile=profile), self.assertRaises(ValueError):
+                profiles.validate_export_profiles(profile, profile)
+
     def test_resource_pairing_keeps_capture_provenance(self):
         for p in profiles.MACOS_EXPORT_PROFILES:
             profiles.validate_resource_profile(p,profiles.RESOURCE_CAPTURE_PROFILE)
@@ -64,6 +79,18 @@ class RuntimeProfiles(unittest.TestCase):
                 profiles.validate_timeline_schema(new,profiles.PROFILE_PREFIX+version)
         for bad in [dict(new,new_version='188.0.0'),dict(new,version=360001),dict(new,version=360000.0)]:
             with self.assertRaises(ValueError): profiles.validate_timeline_schema(bad)
+
+    def test_windows_1147_accepts_both_rendered_schemas_without_inventing_migrations(self):
+        old = {'new_version': '185.0.0', 'version': 360000}
+        new = {'new_version': '187.0.0', 'version': 360000}
+        for profile in profiles.WINDOWS_EXPORT_PROFILES:
+            profiles.validate_timeline_schema(old, profile)
+            profiles.validate_timeline_schema(new, profile)
+        self.assertIsNone(profiles.saved_schema_upgrade(old, old, profiles.WINDOWS_1147_PROFILE))
+        with self.assertRaises(ValueError):
+            profiles.saved_schema_upgrade(old, new, profiles.WINDOWS_1147_PROFILE)
+        with self.assertRaises(ValueError):
+            profiles.validate_timeline_schema(new, 'jy14-headless-windows-11.4.7.14463')
 
     def test_ui_upgrade_is_reported_without_mutating_evidence(self):
         old={'id':'sample','new_version':'185.0.0','version':360000}

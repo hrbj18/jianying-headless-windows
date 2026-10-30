@@ -3,7 +3,9 @@
   "id": "jianying-headless",
   "version": "0.3.0-preview",
   "primary_app_version": "11.5.0",
-  "compatibility_app_versions": ["11.4.2"],
+  "compatibility_app_versions": [
+    "11.4.2"
+  ],
   "skill": "skills/yichen-jianying-edit",
   "native_app": "com.lemon.lvpro",
   "native_app_distributed": false,
@@ -11,16 +13,86 @@
   "clean_machine_acceptance": "not-completed",
   "supported_platforms": {
     "macos": {
-      "architectures": ["arm64"],
-      "app_versions": ["11.5.0", "11.4.2"],
-      "capabilities": ["doctor", "build", "publish", "verify", "edit", "export"]
+      "architectures": [
+        "arm64"
+      ],
+      "app_versions": [
+        "11.5.0",
+        "11.4.2"
+      ],
+      "capabilities": [
+        "doctor",
+        "build",
+        "publish",
+        "verify",
+        "edit",
+        "export"
+      ]
     },
     "windows": {
-      "architectures": ["x64"],
-      "app_builds": ["11.5.0.14471"],
-      "capabilities": ["doctor", "build", "verify-build", "publish", "resume-publish", "verify", "edit-plan", "generate-lyrics", "inspect-jypack", "render-jypack", "official-feature-request", "official-feature-apply", "official-template-render", "official-agent-call", "draftediting-blueprint", "headless-pipeline"],
-      "unsupported": ["edit", "export"],
-      "documentation": "docs/WINDOWS.md"
+      "architectures": [
+        "x64"
+      ],
+      "app_builds": [
+        "11.4.7.14462",
+        "11.5.0.14471"
+      ],
+      "runtime_sha256": {
+        "11.4.7.14462": "fa89997a94e96cf97c8ee436a56ab028ea5f87731214696ba43ff74c0fdc0fa0",
+        "11.5.0.14471": "37cadef37daff82e2ecdcd65080b9cbd7f6f9436f5e56c1ffb90c52c408eb7fb"
+      },
+      "entrypoint": "jianying.ps1",
+      "skill": "skills/jianying-windows",
+      "capabilities": [
+        "doctor",
+        "workspace",
+        "build",
+        "verify-build",
+        "publish",
+        "resume-publish",
+        "verify",
+        "export",
+        "export-draft",
+        "edit-actions",
+        "preview",
+        "vfx",
+        "analyze",
+        "style",
+        "edit-plan",
+        "generate-lyrics",
+        "inspect-jypack",
+        "render-jypack",
+        "official-feature-request",
+        "official-feature-apply",
+        "official-template-render",
+        "official-agent-call",
+        "draftediting-blueprint",
+        "headless-pipeline",
+        "agent",
+        "live-edit"
+      ],
+      "unsupported": [
+        "edit"
+      ],
+      "acceptance_scope": "Exact reviewed builds. Windows 11.4.7 additionally covers local single-timeline multitrack video, programmatic keyframes and easing, speed, basic text, static local TTF/OTF fonts, native audio fades (type 4), audited typed edits and native-frame preview. Byte-specific VFX includes four filters (including retro LOMO and silent film), default glow/mild-shake/blur, white-flash 400/600 ms, local original-shader dissolve/fog/slide-left/slide-right compatibility scenes at 400/600/800/1200 ms, circle geometry and five per-mask linear channels using the unchanged modern official circle package for true feather. Mask geometry uses width/height .05..1 and half-canvas centers -1..1; modern feather 0..1. Mask animation requires forward 1x, source start 0 and linear points. Audited EncryptUtils repairs bind the modern package and native protocol; rendering verifies the 48-file builtin runtime. Original GeneralEffect routing is not repaired. GUI save/cold reopen, unknown resources and legacy native_edit remain unverified. Inputs are saved disk state; edits may use official resource resolution. Preview/export use local snapshots without an extra Windows network sandbox. No mouse, keyboard or desktop screenshot automation. Fog v3 repairs paused-player capture by reusing restored scene cameras and serialized RTs, with original shaders/AE/masks preserved. Preview always captures VEF1 directly, without export/frame decoding. Exact legacy v2 packages upgrade only inside the isolated preview snapshot with an audit; source drafts remain unchanged.",
+      "preview_app_builds": [
+        "11.4.7.14462"
+      ],
+      "native_extension_app_builds": [
+        "11.4.7.14462"
+      ],
+      "documentation": "docs/WINDOWS.md",
+      "cli_documentation": "docs/WINDOWS-CLI.md",
+      "edit_actions_documentation": "docs/WINDOWS-EDIT-ACTIONS.md",
+      "preview_documentation": "docs/WINDOWS-NATIVE-PREVIEW.md",
+      "vfx_documentation": "docs/WINDOWS-VFX.md",
+      "material_analysis_documentation": "docs/WINDOWS-MATERIAL-ANALYSIS.md",
+      "editing_style_documentation": "docs/WINDOWS-EDITING-STYLE.md",
+      "agent_entrypoint": "jianying.ps1 agent",
+      "agent_documentation": "docs/AGENT-ENTRY.md",
+      "live_edit_app_builds": [
+        "11.4.7.14462"
+      ]
     }
   }
 }

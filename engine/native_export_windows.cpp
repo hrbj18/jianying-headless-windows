@@ -12,6 +12,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
+#pragma comment(lib, "shell32.lib")
 
 #include <cstdarg>
 #include <cstddef>
@@ -20,6 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <sstream>
@@ -361,10 +364,43 @@ static void dumpObject(const std::shared_ptr<void>& object, const char* label) {
 int main(int argc, char** argv) {
   // 崩溃时 stdout 缓冲会整块丢失，排查阶段先关掉缓冲
   std::setvbuf(stdout, nullptr, _IONBF, 0);
-  if (argc < 8) {
+  if (argc != 8 && argc != 10) {
     std::printf("用法: native-export-helper.exe <timeline.json> <output.mp4> "
-                "<width> <height> <fps> <bitrate> <timeout-seconds>\n");
+                "<width> <height> <fps> <bitrate> <timeout-seconds> "
+                "[--builtin-resource-root <absolute-path>]\n");
     return 2;
+  }
+  std::filesystem::path builtin_resource_root;
+  if (argc == 10) {
+    if (std::strcmp(argv[8], "--builtin-resource-root") != 0) {
+      std::fprintf(stderr, "不支持的原生导出选项\n");
+      return 2;
+    }
+    // Keep the optional native resource path lossless on Unicode installations.
+    int wide_count = 0;
+    LPWSTR* wide_argv = CommandLineToArgvW(GetCommandLineW(), &wide_count);
+    if (!wide_argv || wide_count != argc) {
+      if (wide_argv) LocalFree(wide_argv);
+      std::fprintf(stderr, "无法读取内置资源根路径\n");
+      return 2;
+    }
+    builtin_resource_root = wide_argv[9];
+    LocalFree(wide_argv);
+    if (!builtin_resource_root.is_absolute() ||
+        !std::filesystem::is_directory(builtin_resource_root) ||
+        std::filesystem::is_symlink(builtin_resource_root)) {
+      std::fprintf(stderr, "内置资源根路径必须为已有绝对目录\n");
+      return 2;
+    }
+    for (const char* relative : {"config.json", "js/video/video.js",
+                                 "resources/feature-mask/config.json",
+                                 "resources/lumi-hub/config.json"}) {
+      const auto file = builtin_resource_root / relative;
+      if (!std::filesystem::is_regular_file(file) || std::filesystem::is_symlink(file)) {
+        std::fprintf(stderr, "内置蒙版资源结构不完整\n");
+        return 2;
+      }
+    }
   }
   const int output_width = std::stoi(argv[3]);
   const int output_height = std::stoi(argv[4]);
@@ -470,6 +506,40 @@ int main(int argc, char** argv) {
   std::printf("    session = %p\n", static_cast<void*>(session.get()));
   if (!session) {
     terminate_child(1);
+  }
+
+  if (!builtin_resource_root.empty()) {
+    // Parent admission pins exact Windows 11.4.7.14462 and resource bytes.
+    // REA/Ghidra of its signed videoeditor_addon.node: FUN_18023f3c0 stores
+    // Resources/lumi_js_resources_video in VEAdapterConfig + 0x9b8. The
+    // caller's _Ref_count_obj2<lvve::adapter::VEAdapterConfig> proves ownership.
+    // No object scanning, guessed construction or application file patching.
+    void* wrapper_raw = reinterpret_cast<void*>(GetProcAddress(dll, S_GET_WRAPPER));
+    void* adapter_raw = reinterpret_cast<void*>(GetProcAddress(dll, S_GET_ADAPTER_CONFIG));
+    if (!wrapper_raw || !adapter_raw) terminate_child(2);
+    using GetWrapper = std::shared_ptr<void> (lyra::Session::*)();
+    GetWrapper get_wrapper = nullptr;
+    static_assert(sizeof(get_wrapper) == sizeof(wrapper_raw));
+    std::memcpy(&get_wrapper, &wrapper_raw, sizeof(get_wrapper));
+    std::shared_ptr<void> wrapper = (session.get()->*get_wrapper)();
+    struct AdapterHolder {};
+    using GetAdapter = std::shared_ptr<void> (AdapterHolder::*)();
+    GetAdapter get_adapter = nullptr;
+    static_assert(sizeof(get_adapter) == sizeof(adapter_raw));
+    std::memcpy(&get_adapter, &adapter_raw, sizeof(get_adapter));
+    if (!wrapper) terminate_child(2);
+    auto* holder = static_cast<AdapterHolder*>(wrapper.get());
+    std::shared_ptr<void> adapter = (holder->*get_adapter)();
+    if (!adapter) terminate_child(2);
+    static_assert(sizeof(std::string) == 32);
+    auto& hub = *reinterpret_cast<std::string*>(static_cast<char*>(adapter.get()) + 0x9b8);
+    const std::string wanted = builtin_resource_root.u8string();
+    if (!hub.empty() && hub != wanted) {
+      std::fprintf(stderr, "拒绝覆盖非预期原生内置资源路径\n");
+      terminate_child(2);
+    }
+    hub = wanted;
+    std::printf("JY_WINDOWS_NATIVE_BUILTIN_RESOURCE_ROOT %s\n", hub.c_str());
   }
 
   std::printf("[3] 解析草稿 JSON -> PersistentDraft\n");
