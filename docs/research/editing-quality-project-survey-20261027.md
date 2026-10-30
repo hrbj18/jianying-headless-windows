@@ -219,4 +219,3 @@ Windows存在路径/进程分支，但CI只跑Linux，本机尚未验收；npm�
 - [Remotion许可](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md)、[video-talkcraft许可](https://github.com/Vincentwei1021/video-talkcraft/blob/main/LICENSE)、[3b1b videos许可说明](https://github.com/3b1b/videos#readme)用于解释为何另列，不把许可证标签空白直接当“禁止使用”或“无限制”。
 
 Agent Reach检查发现本机v1.5.0、可更新v1.6.0；本轮未更新。用户后续可用：“帮我更新Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/update.md”。这与剪辑能力推荐无关，不作为实施前提。
-

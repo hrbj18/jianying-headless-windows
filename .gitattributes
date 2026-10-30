@@ -15,3 +15,8 @@
 .gitignore text eol=lf
 NOTICE text eol=lf
 LICENSE text eol=lf
+
+# These vendored/evidence bytes have external SHA-256 references.
+integrations/orkas-video-studio/** -text
+engine/windows-lut-candidates-v17.json -text
+skills/yuezai-editing-style/references/research/*.json -text

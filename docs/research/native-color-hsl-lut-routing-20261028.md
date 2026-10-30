@@ -107,4 +107,3 @@ D:/.../owned-package/owned-test.cube;D:/.../owned-package
 将 HSL 的 **`path` 与 `lumi_hub_path` 均绑定本机原始 `Resources/DefaultAdjustBundle/merge_all_adjust_color`** 后，原生 ExportService 实际输出严格灰度。主线程像素证据：`JOB/hsl-native-merge-pixel-proof.json`，`mean_chroma=0`、`gray_fraction=1`；同时已查看实际输出帧。出片位于 `D:/JianyingHeadless/work/avhslm-20261028-v4/render.mp4`。所用原始资源共 348 个文件、约 1.27 MB，树摘要前缀 `d3a4a845`。
 
 因此，当前版本已验证可行的是原生 **merge_all_adjust_color 合并资源链**。不得继续把旧包加空 `lumi_hub_path` 推荐为有效修复；也不能将“编码成功”或“日志有 HSL 标量”当作 HSL 生效。GUI 调色模型的加载及 undo/save 路径是另一项仍需独立验收的能力。
-

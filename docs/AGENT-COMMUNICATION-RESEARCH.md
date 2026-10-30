@@ -134,4 +134,3 @@ Codex 同一对话作为入口，配上现成 WorkBuddy Windows MCP 与另一个
 一手依据：[OpenAI Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)、[DeepSeek Context Caching](https://api-docs.deepseek.com/guides/kv_cache/)、[Codex App Server](https://learn.chatgpt.com/docs/app-server)。
 
 采用结论：现成 Windows fork 是可继续验证的 WorkBuddy 通道，当前仍无法仅靠配置满足三方共享对话的完整目标。在“不另造平台”的范围内，本轮未新增聊天前端、conversation store、历史广播层或移除原插件的平台/版本校验。
-
